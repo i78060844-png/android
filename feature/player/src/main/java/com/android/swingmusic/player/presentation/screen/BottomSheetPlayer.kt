@@ -8,7 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -384,17 +383,17 @@ private fun ExpandedPlayerContent(
         }
     }
 
-    val isDarkTheme = isSystemInDarkTheme()
     val inverseOnSurface = MaterialTheme.colorScheme.inverseOnSurface
     val onSurface = MaterialTheme.colorScheme.onSurface
+    // Spotify dark theme colors for file type badges
     val fileTypeBadgeColor = when (track.bitrate) {
-        in 321..1023 -> if (isDarkTheme) Color(0xFF172B2E) else Color(0xFFAEFAF4)
-        in 1024..Int.MAX_VALUE -> if (isDarkTheme) Color(0XFF443E30) else Color(0xFFFFFBCC)
+        in 321..1023 -> Color(0xFF172B2E)
+        in 1024..Int.MAX_VALUE -> Color(0XFF443E30)
         else -> inverseOnSurface
     }
     val fileTypeTextColor = when (track.bitrate) {
-        in 321..1023 -> if (isDarkTheme) Color(0XFF33FFEE) else Color(0xFF172B2E)
-        in 1024..Int.MAX_VALUE -> if (isDarkTheme) Color(0XFFEFE143) else Color(0xFF221700)
+        in 321..1023 -> Color(0XFF33FFEE)
+        in 1024..Int.MAX_VALUE -> Color(0XFFEFE143)
         else -> onSurface
     }
 
@@ -756,9 +755,7 @@ private fun ExpandedPlayerContent(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(24))
-                    .background(
-                        if (isDarkTheme) fileTypeTextColor.copy(alpha = .075F) else fileTypeBadgeColor
-                    )
+                    .background(fileTypeTextColor.copy(alpha = .075F))
                     .wrapContentSize()
                     .padding(8.dp)
             ) {

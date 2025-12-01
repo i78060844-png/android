@@ -4,7 +4,6 @@ import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -58,10 +57,9 @@ fun AlbumItem(
     baseUrl: String,
     onClick: (albumHash: String) -> Unit
 ) {
-    val isDarkTheme = isSystemInDarkTheme()
-
-    val versionContainerColor = if (isDarkTheme) Color(0x26DACC32) else Color(0x3D744F00)
-    val versionTextColor = if (isDarkTheme) Color(0xFFDACC32) else Color(0xFF744E00)
+    // Spotify dark theme colors for version badges
+    val versionContainerColor = Color(0x26DACC32)
+    val versionTextColor = Color(0xFFDACC32)
 
     val otherAlbumArtists: String? = remember {
         album.albumArtists
