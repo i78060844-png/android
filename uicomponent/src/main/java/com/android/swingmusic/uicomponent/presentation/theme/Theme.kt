@@ -1,49 +1,12 @@
 package com.android.swingmusic.uicomponent.presentation.theme
 
-import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 
-private val lightColorScheme = lightColorScheme(
-    primary = light_primary,
-    onPrimary = light_onPrimary,
-    primaryContainer = light_primaryContainer,
-    onPrimaryContainer = light_onPrimaryContainer,
-    secondary = light_secondary,
-    onSecondary = light_onSecondary,
-    secondaryContainer = light_secondaryContainer,
-    onSecondaryContainer = light_onSecondaryContainer,
-    tertiary = light_tertiary,
-    onTertiary = light_onTertiary,
-    tertiaryContainer = light_tertiaryContainer,
-    onTertiaryContainer = light_onTertiaryContainer,
-    error = light_error,
-    errorContainer = light_errorContainer,
-    onError = light_onError,
-    onErrorContainer = light_onErrorContainer,
-    background = light_background,
-    onBackground = light_onBackground,
-    surface = light_surface,
-    onSurface = light_onSurface,
-    surfaceVariant = light_surfaceVariant,
-    onSurfaceVariant = light_onSurfaceVariant,
-    outline = light_outline,
-    inverseOnSurface = light_inverseOnSurface,
-    inverseSurface = light_inverseSurface,
-    inversePrimary = light_inversePrimary,
-    surfaceTint = light_surfaceTint,
-    outlineVariant = light_outlineVariant,
-    scrim = light_scrim,
-)
-
-private val darkColorScheme = darkColorScheme(
+// Spotify-style dark color scheme
+private val spotifyDarkColorScheme = darkColorScheme(
     primary = dark_primary,
     onPrimary = dark_onPrimary,
     primaryContainer = dark_primaryContainer,
@@ -75,55 +38,44 @@ private val darkColorScheme = darkColorScheme(
     scrim = dark_scrim,
 )
 
-/** @param [navBarColor] device navigation bar color. null by default which translates to surface
- * */
+/**
+ * SwingMusicTheme - Applies Spotify-style dark theme to the app
+ * 
+ * Note: Parameters are kept for backward compatibility but are ignored.
+ * The theme always uses the Spotify dark color scheme.
+ * 
+ * @param navBarColor Ignored - kept for API compatibility
+ */
 
 @Composable
 fun SwingMusicTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
-    navBarColor: Color? = null,
+    @Suppress("UNUSED_PARAMETER") darkTheme: Boolean = true,
+    @Suppress("UNUSED_PARAMETER") dynamicColor: Boolean = false,
+    @Suppress("UNUSED_PARAMETER") navBarColor: Color? = null,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> darkColorScheme
-        else -> lightColorScheme
-    }
-    /*val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
-            window.navigationBarColor = navBarColor?.toArgb() ?: colorScheme.surface.toArgb()
-
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars =
-                !darkTheme
-        }
-    }*/
-
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = spotifyDarkColorScheme,
         typography = Typography,
         content = content
     )
 }
 
 
-/**TODO: Use this For Previews where context is not required
- * Since LocalContext.current is breaking previews in the current compose versions (1.6.8)*/
+/**
+ * SwingMusicTheme_Preview - Simplified theme function for Compose previews
+ * 
+ * This function avoids context dependencies that can break previews in
+ * certain Compose versions. It uses the same Spotify dark color scheme
+ * as the main theme function.
+ */
 
 @Composable
 fun SwingMusicTheme_Preview(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = if (isSystemInDarkTheme()) darkColorScheme else lightColorScheme,
+        colorScheme = spotifyDarkColorScheme,
         typography = Typography,
     ) {
         content()
