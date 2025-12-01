@@ -38,8 +38,14 @@ private val spotifyDarkColorScheme = darkColorScheme(
     scrim = dark_scrim,
 )
 
-/** @param [navBarColor] device navigation bar color. null by default which translates to surface
- * */
+/**
+ * SwingMusicTheme - Applies Spotify-style dark theme to the app
+ * 
+ * Note: Parameters are kept for backward compatibility but are ignored.
+ * The theme always uses the Spotify dark color scheme.
+ * 
+ * @param navBarColor Ignored - kept for API compatibility
+ */
 
 @Composable
 fun SwingMusicTheme(
@@ -56,7 +62,13 @@ fun SwingMusicTheme(
 }
 
 
-/** For Previews where context is not required */
+/**
+ * SwingMusicTheme_Preview - Simplified theme function for Compose previews
+ * 
+ * This function avoids context dependencies that can break previews in
+ * certain Compose versions. It uses the same Spotify dark color scheme
+ * as the main theme function.
+ */
 
 @Composable
 fun SwingMusicTheme_Preview(
