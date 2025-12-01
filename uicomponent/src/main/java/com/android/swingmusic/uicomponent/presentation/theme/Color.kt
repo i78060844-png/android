@@ -2,68 +2,86 @@ package com.android.swingmusic.uicomponent.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Default App Theme Colors
+// Spotify-style Night Theme Colors (v1.0.1-night)
 
-val light_primary = Color(0xFF6750A4)
+// Spotify Green accent
+val SpotifyGreen = Color(0xFF1DB954)
+val SpotifyGreenLight = Color(0xFF1ED760)
+val SpotifyGreenDark = Color(0xFF169C46)
+
+// Spotify Dark backgrounds
+val SpotifyBlack = Color(0xFF121212)
+val SpotifyDarkGray = Color(0xFF181818)
+val SpotifyMediumGray = Color(0xFF282828)
+val SpotifyLightGray = Color(0xFF404040)
+
+// Text colors
+val SpotifyWhite = Color(0xFFFFFFFF)
+val SpotifyLightText = Color(0xFFB3B3B3)
+val SpotifySubdued = Color(0xFF727272)
+
+// Light theme (Spotify-inspired light variant)
+val light_primary = SpotifyGreen
 val light_onPrimary = Color(0xFFFFFFFF)
-val light_primaryContainer = Color(0xFFEADDFF)
-val light_onPrimaryContainer = Color(0xFF21005D)
-val light_secondary = Color(0xFF625B71)
+val light_primaryContainer = Color(0xFFB7F5C9)
+val light_onPrimaryContainer = Color(0xFF0D3B1F)
+val light_secondary = Color(0xFF4A6355)
 val light_onSecondary = Color(0xFFFFFFFF)
-val light_secondaryContainer = Color(0xFFE8DEF8)
-val light_onSecondaryContainer = Color(0xFF1D192B)
-val light_tertiary = Color(0xFF7D5260)
+val light_secondaryContainer = Color(0xFFCCE8D7)
+val light_onSecondaryContainer = Color(0xFF072015)
+val light_tertiary = Color(0xFF3B6471)
 val light_onTertiary = Color(0xFFFFFFFF)
-val light_tertiaryContainer = Color(0xFFFFD8E4)
-val light_onTertiaryContainer = Color(0xFF31111D)
-val light_error = Color(0xFFB3261E)
+val light_tertiaryContainer = Color(0xFFBFE9F9)
+val light_onTertiaryContainer = Color(0xFF001F28)
+val light_error = Color(0xFFBA1A1A)
 val light_onError = Color(0xFFFFFFFF)
-val light_errorContainer = Color(0xFFF9DEDC)
-val light_onErrorContainer = Color(0xFF410E0B)
-val light_outline = Color(0xFF79747E)
-val light_background = Color(0xFFFFFBFE)
-val light_onBackground = Color(0xFF1C1B1F)
-val light_surface = Color(0xFFFFFBFE)
-val light_onSurface = Color(0xFF1C1B1F)
-val light_surfaceVariant = Color(0xFFE7E0EC)
-val light_onSurfaceVariant = Color(0xFF49454F)
-val light_inverseSurface = Color(0xFF313033)
-val light_inverseOnSurface = Color(0xFFF4EFF4)
-val light_inversePrimary = Color(0xFFD0BCFF)
+val light_errorContainer = Color(0xFFFFDAD6)
+val light_onErrorContainer = Color(0xFF410002)
+val light_outline = Color(0xFF717972)
+val light_background = Color(0xFFF5FFF6)
+val light_onBackground = Color(0xFF1A1C19)
+val light_surface = Color(0xFFF5FFF6)
+val light_onSurface = Color(0xFF1A1C19)
+val light_surfaceVariant = Color(0xFFDDE5DB)
+val light_onSurfaceVariant = Color(0xFF414942)
+val light_inverseSurface = Color(0xFF2F312D)
+val light_inverseOnSurface = Color(0xFFF0F1EB)
+val light_inversePrimary = SpotifyGreenLight
 val light_shadow = Color(0xFF000000)
-val light_surfaceTint = Color(0xFF6750A4)
-val light_outlineVariant = Color(0xFFCAC4D0)
+val light_surfaceTint = SpotifyGreen
+val light_outlineVariant = Color(0xFFC1C9BF)
 val light_scrim = Color(0xFF000000)
 
-val dark_primary = Color(0xFFD0BCFF)
-val dark_onPrimary = Color(0xFF381E72)
-val dark_primaryContainer = Color(0xFF4F378B)
-val dark_onPrimaryContainer = Color(0xFFEADDFF)
-val dark_secondary = Color(0xFFCCC2DC)
-val dark_onSecondary = Color(0xFF332D41)
-val dark_secondaryContainer = Color(0xFF4A4458)
-val dark_onSecondaryContainer = Color(0xFFE8DEF8)
-val dark_tertiary = Color(0xFFEFB8C8)
-val dark_onTertiary = Color(0xFF492532)
-val dark_tertiaryContainer = Color(0xFF633B48)
-val dark_onTertiaryContainer = Color(0xFFFFD8E4)
-val dark_error = Color(0xFFF2B8B5)
-val dark_onError = Color(0xFF601410)
-val dark_errorContainer = Color(0xFF8C1D18)
-val dark_onErrorContainer = Color(0xFFF9DEDC)
-val dark_outline = Color(0xFF938F99)
-val dark_background = Color(0xFF1C1B1F)
-val dark_onBackground = Color(0xFFE6E1E5)
-val dark_surface = Color(0xFF1C1B1F)
-val dark_onSurface = Color(0xFFE6E1E5)
-val dark_surfaceVariant = Color(0xFF49454F)
-val dark_onSurfaceVariant = Color(0xFFCAC4D0)
-val dark_inverseSurface = Color(0xFFE6E1E5)
-val dark_inverseOnSurface = Color(0xFF313033)
-val dark_inversePrimary = Color(0xFF6750A4)
+// Dark theme (Spotify Night Mode)
+val dark_primary = SpotifyGreen
+val dark_onPrimary = Color(0xFF003919)
+val dark_primaryContainer = SpotifyGreenDark
+val dark_onPrimaryContainer = Color(0xFFB7F5C9)
+val dark_secondary = SpotifyLightText
+val dark_onSecondary = Color(0xFF1D3529)
+val dark_secondaryContainer = SpotifyMediumGray
+val dark_onSecondaryContainer = Color(0xFFCCE8D7)
+val dark_tertiary = Color(0xFFA3CDDC)
+val dark_onTertiary = Color(0xFF033641)
+val dark_tertiaryContainer = Color(0xFF214C59)
+val dark_onTertiaryContainer = Color(0xFFBFE9F9)
+val dark_error = Color(0xFFFFB4AB)
+val dark_onError = Color(0xFF690005)
+val dark_errorContainer = Color(0xFF93000A)
+val dark_onErrorContainer = Color(0xFFFFDAD6)
+val dark_outline = SpotifySubdued
+val dark_background = SpotifyBlack
+val dark_onBackground = SpotifyWhite
+val dark_surface = SpotifyBlack
+val dark_onSurface = SpotifyWhite
+val dark_surfaceVariant = SpotifyMediumGray
+val dark_onSurfaceVariant = SpotifyLightText
+val dark_inverseSurface = SpotifyWhite
+val dark_inverseOnSurface = SpotifyBlack
+val dark_inversePrimary = SpotifyGreenDark
 val dark_shadow = Color(0xFF000000)
-val dark_surfaceTint = Color(0xFFD0BCFF)
-val dark_outlineVariant = Color(0xFF49454F)
+val dark_surfaceTint = SpotifyGreen
+val dark_outlineVariant = SpotifyLightGray
 val dark_scrim = Color(0xFF000000)
 
-val seed = Color(0xFF6750A4)
+val seed = SpotifyGreen
