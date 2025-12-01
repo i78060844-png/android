@@ -11,28 +11,33 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -81,6 +86,7 @@ import com.ramcosta.composedestinations.utils.destination
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import com.android.swingmusic.uicomponent.R as UiComponent
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -127,17 +133,20 @@ class MainActivity : ComponentActivity() {
                 QueueScreenDestination
             )
 
-            val showBottomNav =
+            val showDrawer =
                 route != null && newBackStackEntry?.destination() !in hideForDestination
 
-            val bottomNavItems: List<BottomNavItem> = listOf(
+            val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+            val scope = rememberCoroutineScope()
+
+            val navItems: List<BottomNavItem> = listOf(
                 BottomNavItem.Folder,
                 BottomNavItem.Album,
                 BottomNavItem.Artist,
                 BottomNavItem.Search,
             )
 
-            val bottomNavRoutePrefixes = mapOf(
+            val navRoutePrefixes = mapOf(
                 BottomNavItem.Folder to listOf(FoldersAndTracksPaginatedScreenDestination.route),
                 BottomNavItem.Album to listOf(
                     AllAlbumScreenDestination.route,
@@ -167,94 +176,119 @@ class MainActivity : ComponentActivity() {
                         navController.navigate(QueueScreenDestination.route)
                     }
                 ) {
-                    Scaffold(
-                        modifier = Modifier.fillMaxSize(),
-                        bottomBar = {
-                            if (showBottomNav) {
-                                NavigationBar(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    containerColor = MaterialTheme.colorScheme.inverseOnSurface
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.Center
-                                    ) {
-                                        bottomNavItems.forEach { item ->
-                                            NavigationBarItem(
-                                                icon = {
-                                                    Icon(
-                                                        painter = painterResource(id = item.icon),
-                                                        contentDescription = null
-                                                    )
-                                                },
-                                                selected = navController.currentDestination?.route?.let { route ->
-                                                    bottomNavRoutePrefixes[item]?.any { prefix ->
-                                                        route.startsWith(prefix)
-                                                    } == true
-                                                } == true,
-                                                alwaysShowLabel = false,
-                                                label = { Text(text = item.title) },
-                                                onClick = {
-                                                    if (navController.currentDestination?.route != item.destination.route) {
-                                                        navController.navigate(item.destination.route) {
-                                                            launchSingleTop = true
-                                                            restoreState = false
+                    ModalNavigationDrawer(
+                        drawerState = drawerState,
+                        gesturesEnabled = showDrawer,
+                        drawerContent = {
+                            if (showDrawer) {
+                                ModalDrawerSheet {
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                    Text(
+                                        text = "SwingMusic",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    navItems.forEach { item ->
+                                        val isSelected = navController.currentDestination?.route?.let { currentRoute ->
+                                            navRoutePrefixes[item]?.any { prefix ->
+                                                currentRoute.startsWith(prefix)
+                                            } == true
+                                        } == true
 
-                                                            popUpTo(navController.graph.startDestinationId) {
-                                                                saveState = false
-                                                                inclusive = false
-                                                            }
+                                        NavigationDrawerItem(
+                                            icon = {
+                                                Icon(
+                                                    painter = painterResource(id = item.icon),
+                                                    contentDescription = null
+                                                )
+                                            },
+                                            label = { Text(text = item.title) },
+                                            selected = isSelected,
+                                            onClick = {
+                                                scope.launch { drawerState.close() }
+                                                if (navController.currentDestination?.route != item.destination.route) {
+                                                    navController.navigate(item.destination.route) {
+                                                        launchSingleTop = true
+                                                        restoreState = false
+
+                                                        popUpTo(navController.graph.startDestinationId) {
+                                                            saveState = false
+                                                            inclusive = false
                                                         }
                                                     }
-
-                                                    if (item.destination.route == FoldersAndTracksPaginatedScreenDestination.route) {
-                                                        foldersViewModel.onFolderUiEvent(
-                                                            FolderUiEvent.OnClickNavPath(
-                                                                folder = foldersViewModel.homeDir
-                                                            )
-                                                        )
-                                                    }
-
-                                                    if (item.destination.route == SearchScreenDestination.route) {
-                                                        searchViewModel.onSearchUiEvent(
-                                                            SearchUiEvent.OnClearSearchStates
-                                                        )
-                                                    }
                                                 }
+
+                                                if (item.destination.route == FoldersAndTracksPaginatedScreenDestination.route) {
+                                                    foldersViewModel.onFolderUiEvent(
+                                                        FolderUiEvent.OnClickNavPath(
+                                                            folder = foldersViewModel.homeDir
+                                                        )
+                                                    )
+                                                }
+
+                                                if (item.destination.route == SearchScreenDestination.route) {
+                                                    searchViewModel.onSearchUiEvent(
+                                                        SearchUiEvent.OnClearSearchStates
+                                                    )
+                                                }
+                                            },
+                                            modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    ) {
+                        Scaffold(
+                            modifier = Modifier.fillMaxSize(),
+                            topBar = {
+                                if (showDrawer) {
+                                    Box(
+                                        modifier = Modifier.padding(start = 8.dp, top = 8.dp)
+                                    ) {
+                                        IconButton(
+                                            onClick = {
+                                                scope.launch { drawerState.open() }
+                                            }
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(id = UiComponent.drawable.ic_menu),
+                                                contentDescription = "Menu"
                                             )
                                         }
                                     }
                                 }
                             }
-                        }
-                    ) { paddingValues ->
-                        Surface(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(paddingValues)
-                        ) {
-                            AnimatedVisibility(
-                                visible = isUserLoggedIn == null,
-                                enter = fadeIn(animationSpec = tween(durationMillis = 100))
+                        ) { paddingValues ->
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(paddingValues)
                             ) {
-                                Box(
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentAlignment = Alignment.Center
+                                AnimatedVisibility(
+                                    visible = isUserLoggedIn == null,
+                                    enter = fadeIn(animationSpec = tween(durationMillis = 100))
                                 ) {
-                                    CircularProgressIndicator()
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
                                 }
-                            }
 
-                            isUserLoggedIn?.let { value ->
-                                SwingMusicAppNavigation(
-                                    isUserLoggedIn = value,
-                                    navController = navController,
-                                    authViewModel = authViewModel,
-                                    mediaControllerViewModel = mediaControllerViewModel,
-                                    foldersViewModel = foldersViewModel,
-                                    artistInfoViewModel = artistInfoViewModel,
-                                    searchViewModel = searchViewModel
-                                )
+                                isUserLoggedIn?.let { value ->
+                                    SwingMusicAppNavigation(
+                                        isUserLoggedIn = value,
+                                        navController = navController,
+                                        authViewModel = authViewModel,
+                                        mediaControllerViewModel = mediaControllerViewModel,
+                                        foldersViewModel = foldersViewModel,
+                                        artistInfoViewModel = artistInfoViewModel,
+                                        searchViewModel = searchViewModel
+                                    )
+                                }
                             }
                         }
                     }
