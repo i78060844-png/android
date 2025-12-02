@@ -3,11 +3,14 @@ package com.android.swingmusic.search.presentation.screen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -141,63 +144,61 @@ fun ViewAllSearchResults(
         }
     }
 
-    Scaffold { outerPadding ->
-        Scaffold(
-            snackbarHost = {
-                SnackbarHost(
-                    hostState = snackbarHostState,
-                    modifier = Modifier.padding(bottom = 170.dp)
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState
+            )
+        },
+        topBar = {
+            Column(
+                modifier = Modifier.padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = 16.dp,
+                    bottom = 4.dp
                 )
-            },
-            modifier = Modifier.padding(outerPadding),
-            topBar = {
-                Column(
-                    modifier = Modifier.padding(
-                        start = 16.dp,
-                        end = 16.dp,
-                        top = 16.dp,
-                        bottom = 4.dp
-                    )
+            ) {
+                Text(
+                    text = "Search",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Search",
-                        style = MaterialTheme.typography.headlineMedium
+                        text = viewAllType.replaceFirstChar { it.uppercase() },
+                        style = TextStyle(
+                            fontSize = 11.sp
+                        ),
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = .80F)
                     )
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = viewAllType.replaceFirstChar { it.uppercase() },
-                            style = TextStyle(
-                                fontSize = 11.sp
-                            ),
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .80F)
-                        )
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .size(4.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = .36F))
+                    )
 
-                        Box(
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp)
-                                .size(4.dp)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.onSurface.copy(alpha = .36F))
-                        )
-
-                        Text(
-                            text = "\"${searchParams}\"",
-                            style = TextStyle(
-                                fontSize = 11.sp
-                            ),
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .80F)
-                        )
-                    }
+                    Text(
+                        text = "\"${searchParams}\"",
+                        style = TextStyle(
+                            fontSize = 11.sp
+                        ),
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = .80F)
+                    )
                 }
             }
-        ) { pdValues ->
+        }
+    ) { pdValues ->
             if (showTrackBottomSheet) {
                 clickedTrack?.let { track ->
                     CustomTrackBottomSheet(
@@ -425,9 +426,6 @@ fun ViewAllSearchResults(
                                             }
                                         )
 
-                                        if (index == tracks.data?.lastIndex) {
-                                            Spacer(modifier = Modifier.height(250.dp))
-                                        }
                                     }
                                 }
                             }
@@ -457,9 +455,6 @@ fun ViewAllSearchResults(
                                         )
                                     }
 
-                                    item(span = { GridItemSpan(2) }) {
-                                        Spacer(modifier = Modifier.height(250.dp))
-                                    }
                                 }
                             }
                         }
@@ -488,9 +483,6 @@ fun ViewAllSearchResults(
                                         )
                                     }
 
-                                    item(span = { GridItemSpan(2) }) {
-                                        Spacer(modifier = Modifier.height(250.dp))
-                                    }
                                 }
                             }
                         }

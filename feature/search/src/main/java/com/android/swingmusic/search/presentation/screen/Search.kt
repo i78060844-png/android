@@ -1,6 +1,5 @@
 package com.android.swingmusic.search.presentation.screen
 
-import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -11,10 +10,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -86,7 +87,6 @@ import com.android.swingmusic.uicomponent.presentation.util.Screen
 import com.ramcosta.composedestinations.annotation.Destination
 import kotlinx.coroutines.launch
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 private fun Search(
     isLoading: Boolean,
@@ -116,66 +116,64 @@ private fun Search(
     val lazyColumnState = rememberLazyListState()
     val clickInteractionSource = remember { MutableInteractionSource() }
 
-    Scaffold {
-        Scaffold(
-            snackbarHost = {
-                SnackbarHost(
-                    hostState = snackbarHostState,
-                    modifier = Modifier.padding(bottom = 170.dp)
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState
+            )
+        },
+        topBar = {
+            Column {
+                Text(
+                    modifier = Modifier.padding(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 16.dp,
+                        bottom = 4.dp
+                    ),
+                    text = "Search",
+                    style = MaterialTheme.typography.headlineMedium
                 )
-            },
-            modifier = Modifier.padding(it),
-            topBar = {
-                Column {
-                    Text(
-                        modifier = Modifier.padding(
-                            start = 16.dp,
-                            end = 16.dp,
-                            top = 16.dp,
-                            bottom = 4.dp
-                        ),
-                        text = "Search",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
 
-                    AnimatedVisibility(visible = lazyColumnState.isScrollingUp()) {
-                        TextField(
-                            value = searchParams,
-                            onValueChange = { newValue ->
-                                onSearchParamChanged(newValue)
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            placeholder = { Text("search swing music") },
-                            singleLine = true,
-                            maxLines = 1,
-                            shape = RoundedCornerShape(12.dp),
-                            colors = TextFieldDefaults.colors(
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
-                            ),
-                            leadingIcon = {
-                                Icon(
-                                    modifier = Modifier.size(24.dp),
-                                    painter = painterResource(id = R.drawable.swing_music_logo_rounded),
-                                    contentDescription = "App Icon"
-                                )
-                            },
-                            trailingIcon = {
-                                if (searchParams.trim().isNotEmpty()) {
-                                    IconButton(onClick = {
-                                        onSearchParamChanged("")
-                                    }) {
-                                        Icon(Icons.Default.Clear, contentDescription = null)
-                                    }
+                AnimatedVisibility(visible = lazyColumnState.isScrollingUp()) {
+                    TextField(
+                        value = searchParams,
+                        onValueChange = { newValue ->
+                            onSearchParamChanged(newValue)
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        placeholder = { Text("search swing music") },
+                        singleLine = true,
+                        maxLines = 1,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = TextFieldDefaults.colors(
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        leadingIcon = {
+                            Icon(
+                                modifier = Modifier.size(24.dp),
+                                painter = painterResource(id = R.drawable.swing_music_logo_rounded),
+                                contentDescription = "App Icon"
+                            )
+                        },
+                        trailingIcon = {
+                            if (searchParams.trim().isNotEmpty()) {
+                                IconButton(onClick = {
+                                    onSearchParamChanged("")
+                                }) {
+                                    Icon(Icons.Default.Clear, contentDescription = null)
                                 }
                             }
-                        )
-                    }
+                        }
+                    )
                 }
             }
-        ) { paddingValues ->
+        }
+    ) { paddingValues ->
             when {
                 isLoading -> {
                     Box(

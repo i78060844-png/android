@@ -7,11 +7,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -133,10 +136,13 @@ private fun FoldersAndTracksPaginated(
     }
 
     val refreshState = rememberPullToRefreshState()
+    val miniPlayerPeekPadding = 64.dp
 
     val lazyColumnState = rememberLazyListState()
     val pathsLazyRowState = rememberLazyListState()
-    Scaffold { it ->
+    Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing
+    ) { safePadding ->
         PullToRefreshBox(
             modifier = Modifier.fillMaxSize(),
             isRefreshing = isManualRefreshing,
@@ -158,7 +164,8 @@ private fun FoldersAndTracksPaginated(
             }
         ) {
             Scaffold(
-                modifier = Modifier.padding(it),
+                modifier = Modifier.padding(safePadding),
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
                 topBar = {
                     Text(
                         modifier = Modifier.padding(
@@ -236,7 +243,8 @@ private fun FoldersAndTracksPaginated(
 
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        state = lazyColumnState
+                        state = lazyColumnState,
+                        contentPadding = PaddingValues(bottom = miniPlayerPeekPadding)
                     ) {
                         // Navigation Paths
                         stickyHeader {
@@ -331,10 +339,6 @@ private fun FoldersAndTracksPaginated(
                                 }
                             }
                             
-                            // Add bottom spacing
-                            item {
-                                Spacer(modifier = Modifier.height(200.dp))
-                            }
                         }
 
                         when (val appendState = pagingContent.loadState.append) {
