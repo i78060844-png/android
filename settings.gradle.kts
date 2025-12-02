@@ -27,6 +27,7 @@ include(":auth")
 include(":database")
 include(":network")
 include(":uicomponent")
+include(":endlesssound")
 
 // Feature Modules
 include(":feature:folder")

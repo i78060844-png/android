@@ -63,6 +63,7 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":network"))
     implementation(project(":uicomponent"))
+    implementation(project(":endlesssound"))
     // Feature Modules
     implementation(project(":feature:home"))
     implementation(project(":feature:folder"))

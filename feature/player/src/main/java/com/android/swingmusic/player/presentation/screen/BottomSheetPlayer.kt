@@ -272,7 +272,7 @@ private fun CollapsedPlayerContent(
             gapSize = 0.dp,
             drawStopIndicator = {},
             strokeCap = StrokeCap.Square,
-            color = Color(0xFF1DB954), // Spotify green
+            color = Color.White,
             trackColor = Color.Transparent
         )
 
@@ -459,7 +459,7 @@ private fun ExpandedPlayerContent(
         // Drag handle
         Box(
             modifier = Modifier
-                .padding(top = 12.dp, bottom = 24.dp)
+                .padding(top = 12.dp, bottom = 16.dp)
                 .pointerInput(Unit) {
                     detectVerticalDragGestures { _, dragAmount ->
                         if (dragAmount > 20) {
@@ -482,7 +482,7 @@ private fun ExpandedPlayerContent(
         HorizontalPager(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
+                .aspectRatio(1f),
             state = pagerState,
             beyondViewportPageCount = 2,
             verticalAlignment = Alignment.CenterVertically,
@@ -521,7 +521,7 @@ private fun ExpandedPlayerContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Track title and artist
         Row(

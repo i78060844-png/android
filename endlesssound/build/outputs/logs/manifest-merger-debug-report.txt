@@ -1,0 +1,16 @@
+-- Merging decision tree log ---
+manifest
+ADDED from F:\android\endlesssound\src\main\AndroidManifest.xml:1:1-2:12
+INJECTED from F:\android\endlesssound\src\main\AndroidManifest.xml:1:1-2:12
+	package
+		INJECTED from F:\android\endlesssound\src\main\AndroidManifest.xml
+	xmlns:android
+		ADDED from F:\android\endlesssound\src\main\AndroidManifest.xml:1:11-69
+uses-sdk
+INJECTED from F:\android\endlesssound\src\main\AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from F:\android\endlesssound\src\main\AndroidManifest.xml
+INJECTED from F:\android\endlesssound\src\main\AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from F:\android\endlesssound\src\main\AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from F:\android\endlesssound\src\main\AndroidManifest.xml

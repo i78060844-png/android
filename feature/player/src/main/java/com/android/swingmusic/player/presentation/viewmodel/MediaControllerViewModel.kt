@@ -13,11 +13,14 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaController
 import com.android.swingmusic.auth.domain.repository.AuthRepository
 import com.android.swingmusic.core.data.util.Resource
+import com.android.swingmusic.core.domain.model.ListeningSource
 import com.android.swingmusic.core.domain.model.Track
+import com.android.swingmusic.core.domain.repository.MusicForYouRepository
 import com.android.swingmusic.core.domain.util.PlaybackState
 import com.android.swingmusic.core.domain.util.QueueSource
 import com.android.swingmusic.core.domain.util.RepeatMode
 import com.android.swingmusic.core.domain.util.ShuffleMode
+import com.android.swingmusic.endlesssound.domain.repository.EndlessSoundRepository
 import com.android.swingmusic.player.domain.repository.PLayerRepository
 import com.android.swingmusic.player.presentation.event.PlayerUiEvent
 import com.android.swingmusic.player.presentation.event.PlayerUiEvent.OnClickLyricsIcon
@@ -56,6 +59,8 @@ import androidx.core.net.toUri
 class MediaControllerViewModel @Inject constructor(
     private val pLayerRepository: PLayerRepository,
     private val authRepository: AuthRepository,
+    private val musicForYouRepository: MusicForYouRepository,
+    private val endlessSoundRepository: EndlessSoundRepository,
     private val vibrator: Vibrator
 ) : ViewModel() {
     private val _baseUrl: MutableStateFlow<String?> = MutableStateFlow(null)
@@ -72,6 +77,9 @@ class MediaControllerViewModel @Inject constructor(
 
     private var queueExpansionJob: Job? = null
     private var currentExpandingSource: QueueSource? = null
+    
+    // MusicForYou tracking
+    private var trackStartTimeMs: Long = 0L
 
     private val _playerUiState: MutableStateFlow<PlayerUiState> = MutableStateFlow(
         PlayerUiState(
@@ -88,6 +96,46 @@ class MediaControllerViewModel @Inject constructor(
     fun refreshBaseUrl() {
         viewModelScope.launch {
             _baseUrl.update { authRepository.getBaseUrl() }
+        }
+    }
+
+    // ==================== MusicForYou SDK Tracking ====================
+    
+    private fun queueSourceToListeningSource(source: QueueSource): ListeningSource {
+        return when (source) {
+            is QueueSource.ALBUM -> ListeningSource.ALBUM
+            is QueueSource.ARTIST -> ListeningSource.ARTIST
+            is QueueSource.FOLDER -> ListeningSource.FOLDER
+            is QueueSource.PLAYLIST -> ListeningSource.PLAYLIST
+            is QueueSource.SEARCH -> ListeningSource.SEARCH
+            is QueueSource.FAVORITE -> ListeningSource.QUEUE
+            is QueueSource.UNKNOWN -> ListeningSource.UNKNOWN
+            else -> ListeningSource.UNKNOWN
+        }
+    }
+    
+    private fun trackPlayStarted(track: Track) {
+        trackStartTimeMs = System.currentTimeMillis()
+        viewModelScope.launch {
+            try {
+                val source = queueSourceToListeningSource(_playerUiState.value.source)
+                musicForYouRepository.onTrackStarted(track, source)
+                Timber.tag("MusicForYou").d("Track started: ${track.title}")
+            } catch (e: Exception) {
+                Timber.tag("MusicForYou").e("Failed to track start: $e")
+            }
+        }
+    }
+    
+    private fun trackPlayEnded(track: Track?, durationPlayedMs: Long, skipped: Boolean) {
+        if (track == null) return
+        viewModelScope.launch {
+            try {
+                musicForYouRepository.onTrackEnded(track, durationPlayedMs, skipped)
+                Timber.tag("MusicForYou").d("Track ended: ${track.title}, duration: ${durationPlayedMs}ms, skipped: $skipped")
+            } catch (e: Exception) {
+                Timber.tag("MusicForYou").e("Failed to track end: $e")
+            }
         }
     }
 
@@ -277,12 +325,17 @@ class MediaControllerViewModel @Inject constructor(
         }
     }
 
-    private fun createMediaItem(id: Int, track: Track): MediaItem {
-        val encodedFilePath = Uri.encode(track.filepath)
-        val uriString = "${_baseUrl.value}file/${track.trackHash}/legacy?filepath=$encodedFilePath"
-        val uri = uriString.toUri()
+    private suspend fun createMediaItem(id: Int, track: Track): MediaItem {
+        val baseUrl = _baseUrl.value ?: ""
+        
+        // Try to get from EndlessSound cache first
+        val uri = endlessSoundRepository.getTrackUri(
+            trackHash = track.trackHash,
+            originalPath = track.filepath,
+            baseUrl = baseUrl
+        ).toUri()
 
-        val artworkUri = "${_baseUrl.value}img/thumbnail/${track.image}".toUri()
+        val artworkUri = "${baseUrl}img/thumbnail/${track.image}".toUri()
         val artists = track.trackArtists.joinToString(", ") { it.name }
 
         val mediaMetadata = MediaMetadata.Builder()
@@ -297,6 +350,77 @@ class MediaControllerViewModel @Inject constructor(
             .setMediaId(id.toString())
             .setMediaMetadata(mediaMetadata)
             .build()
+    }
+    
+    /**
+     * Start caching track in background when playback begins
+     */
+    private fun startCachingTrack(track: Track) {
+        viewModelScope.launch {
+            try {
+                val baseUrl = _baseUrl.value ?: return@launch
+                endlessSoundRepository.startCaching(
+                    trackHash = track.trackHash,
+                    originalPath = track.filepath,
+                    baseUrl = baseUrl
+                )
+            } catch (e: Exception) {
+                Timber.tag("EndlessSound").e("Caching failed: ${e.message}")
+            }
+        }
+    }
+    
+    /**
+     * Pre-cache next track in queue for seamless playback
+     */
+    private fun cacheNextTrack(currentIndex: Int) {
+        viewModelScope.launch {
+            try {
+                val baseUrl = _baseUrl.value ?: return@launch
+                val currentQueue = if (_playerUiState.value.shuffleMode == ShuffleMode.SHUFFLE_ON) {
+                    shuffledQueue
+                } else {
+                    workingQueue
+                }
+                
+                // Cache next 2 tracks
+                listOf(currentIndex + 1, currentIndex + 2).forEach { nextIndex ->
+                    if (nextIndex in currentQueue.indices) {
+                        val nextTrack = currentQueue[nextIndex]
+                        endlessSoundRepository.startCaching(
+                            trackHash = nextTrack.trackHash,
+                            originalPath = nextTrack.filepath,
+                            baseUrl = baseUrl
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.tag("EndlessSound").e("Pre-caching failed: ${e.message}")
+            }
+        }
+    }
+    
+    /**
+     * Record replay session for TTL upgrades
+     */
+        }
+    }
+    
+    /**
+     * Record replay session for TTL upgrades
+     */
+    private fun recordReplaySession(track: Track, startPositionSec: Int, listenedDurationSec: Int) {
+        viewModelScope.launch {
+            try {
+                endlessSoundRepository.recordReplaySession(
+                    trackHash = track.trackHash,
+                    startPositionSec = startPositionSec,
+                    listenedDurationSec = listenedDurationSec
+                )
+            } catch (e: Exception) {
+                Timber.tag("EndlessSound").e("Replay session recording failed: ${e.message}")
+            }
+        }
     }
 
     /** Prevent seekbar from snapping to end by resetting it to zero
@@ -380,26 +504,28 @@ class MediaControllerViewModel @Inject constructor(
 
             trackToLog = playNextTrack
         } else {
-            val currentPlayingIndex = mediaController?.currentMediaItemIndex ?: 0
-            val insertIndex = currentPlayingIndex + 1
+            viewModelScope.launch {
+                val currentPlayingIndex = mediaController?.currentMediaItemIndex ?: 0
+                val insertIndex = currentPlayingIndex + 1
 
-            targetQueue.add(insertIndex, playNextTrack)
-            _playerUiState.value = _playerUiState.value.copy(queue = targetQueue)
+                targetQueue.add(insertIndex, playNextTrack)
+                _playerUiState.value = _playerUiState.value.copy(queue = targetQueue)
 
-            val mediaItems = targetQueue.mapIndexed { index, track ->
-                createMediaItem(id = index, track = track)
+                val mediaItems = targetQueue.mapIndexed { index, track ->
+                    createMediaItem(id = index, track = track)
+                }
+
+                mediaController?.replaceMediaItems(
+                    insertIndex,
+                    targetQueue.lastIndex,
+                    mediaItems.drop(insertIndex)
+                )
+
+                updateQueueInDatabase(
+                    queue = targetQueue,
+                    playingTrackIndex = currentPlayingIndex
+                )
             }
-
-            mediaController?.replaceMediaItems(
-                insertIndex,
-                targetQueue.lastIndex,
-                mediaItems.drop(insertIndex)
-            )
-
-            updateQueueInDatabase(
-                queue = targetQueue,
-                playingTrackIndex = currentPlayingIndex
-            )
         }
     }
 
@@ -442,19 +568,21 @@ class MediaControllerViewModel @Inject constructor(
             targetQueue.add(track)
             _playerUiState.value = _playerUiState.value.copy(queue = targetQueue)
 
-            val newMediaItem = createMediaItem(
-                id = targetQueue.lastIndex,
-                track = track
-            )
+            viewModelScope.launch {
+                val newMediaItem = createMediaItem(
+                    id = targetQueue.lastIndex,
+                    track = track
+                )
 
-            mediaController?.apply {
-                addMediaItem(newMediaItem)
+                mediaController?.apply {
+                    addMediaItem(newMediaItem)
+                }
+
+                updateQueueInDatabase(
+                    queue = targetQueue,
+                    playingTrackIndex = mediaController?.currentMediaItemIndex ?: 0
+                )
             }
-
-            updateQueueInDatabase(
-                queue = targetQueue,
-                playingTrackIndex = mediaController?.currentMediaItemIndex ?: 0
-            )
         }
     }
 
@@ -490,6 +618,11 @@ class MediaControllerViewModel @Inject constructor(
         // Update the Track to Log in case of a Transition or Shuffle/End
         trackToLog = workingQueue[startIndex]
         _playerUiState.value = _playerUiState.value.copy(source = source)
+        
+        // MusicForYou: Track new playback start
+        if (autoPlay) {
+            trackPlayStarted(workingQueue[startIndex])
+        }
     }
 
     fun logRecentlyPlayedTrackToServer(
@@ -979,6 +1112,10 @@ class MediaControllerViewModel @Inject constructor(
                         isBuffering = false,
                         playbackState = PlaybackState.PAUSED
                     )
+                    
+                    // MusicForYou: Track completed play
+                    val actualPlayDurationMs = durationPlayedSec * 1000L
+                    trackPlayEnded(trackToLog, actualPlayDurationMs, skipped = false)
 
                     if (trackToLog != null && durationPlayedSec >= 5L) {
                         if (_playerUiState.value.shuffleMode == ShuffleMode.SHUFFLE_OFF) {
@@ -1027,6 +1164,11 @@ class MediaControllerViewModel @Inject constructor(
                     }
                     
                     val playingTrack = currentQueue[trackIndex]
+                    
+                    // MusicForYou: Track previous track end
+                    val actualPlayDurationMs = durationPlayedSec * 1000L
+                    val wasSkipped = trackToLog != null && durationPlayedSec < 30
+                    trackPlayEnded(trackToLog, actualPlayDurationMs, wasSkipped)
 
                     _playerUiState.value = _playerUiState.value.copy(
                         playingTrackIndex = trackIndex,
@@ -1054,6 +1196,24 @@ class MediaControllerViewModel @Inject constructor(
                     // Prepare for the next Transition log data
                     durationPlayedSec = 0L
                     trackToLog = playingTrack
+                    
+                    // MusicForYou: Track new track start
+                    trackPlayStarted(playingTrack)
+                    
+                    // EndlessSound: Start caching current track (if not cached yet)
+                    startCachingTrack(playingTrack)
+                    
+                    // EndlessSound: Pre-cache next tracks in background
+                    cacheNextTrack(trackIndex)
+                    
+                    // Record replay session for previous track (for TTL upgrade)
+                    trackToLog?.let { prevTrack ->
+                        recordReplaySession(
+                            track = prevTrack,
+                            startPositionSec = 0, // We don't track exact start position yet
+                            listenedDurationSec = durationPlayedSec.toInt()
+                        )
+                    }
                 } catch (e: Exception) {
                     Timber.e("ERROR ON TRANSITION -> $e")
                 }
@@ -1084,16 +1244,18 @@ class MediaControllerViewModel @Inject constructor(
             )
         }
 
-        val mediaItems = tracksToAddToMediaController.mapIndexed { index, track ->
-            createMediaItem(id = currentQueueSize + index, track = track)
+        viewModelScope.launch {
+            val mediaItems = tracksToAddToMediaController.mapIndexed { index, track ->
+                createMediaItem(id = currentQueueSize + index, track = track)
+            }
+            
+            mediaController?.addMediaItems(mediaItems)
+            
+            updateQueueInDatabase(
+                queue = workingQueue,
+                playingTrackIndex = _playerUiState.value.playingTrackIndex
+            )
         }
-        
-        mediaController?.addMediaItems(mediaItems)
-        
-        updateQueueInDatabase(
-            queue = workingQueue,
-            playingTrackIndex = _playerUiState.value.playingTrackIndex
-        )
     }
 
     private fun startQueueExpansion(folderSource: QueueSource.FOLDER, currentTracks: List<Track>) {

@@ -1,5 +1,8 @@
 package com.android.swingmusic.home.presentation.viewmodel
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -7,8 +10,11 @@ import androidx.lifecycle.viewModelScope
 import com.android.swingmusic.core.domain.model.Album
 import com.android.swingmusic.core.domain.model.Artist
 import com.android.swingmusic.auth.domain.repository.AuthRepository
+import com.android.swingmusic.endlesssound.domain.model.CachedTrack
+import com.android.swingmusic.endlesssound.domain.repository.EndlessSoundRepository
 import com.android.swingmusic.network.data.api.service.NetworkApiService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,13 +35,20 @@ data class HomeUiState(
     
     // Stats
     val totalAlbums: Int = 0,
-    val totalArtists: Int = 0
+    val totalArtists: Int = 0,
+    
+    // Always Here - cached tracks available offline
+    val alwaysHereTracks: List<CachedTrack> = emptyList(),
+    val showAlwaysHere: Boolean = false,
+    val isNetworkUnstable: Boolean = false
 )
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val networkApiService: NetworkApiService,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val endlessSoundRepository: EndlessSoundRepository
 ) : ViewModel() {
     
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -46,6 +59,37 @@ class HomeViewModel @Inject constructor(
     
     init {
         loadHomeData()
+        checkNetworkAndLoadCached()
+    }
+    
+    private fun checkNetworkAndLoadCached() {
+        viewModelScope.launch {
+            val isUnstable = isNetworkUnstable()
+            val cachedTracks = endlessSoundRepository.getValidCachedTracks()
+            
+            _uiState.update { 
+                it.copy(
+                    isNetworkUnstable = isUnstable,
+                    alwaysHereTracks = cachedTracks,
+                    showAlwaysHere = isUnstable && cachedTracks.isNotEmpty()
+                )
+            }
+        }
+    }
+    
+    private fun isNetworkAvailable(): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+               capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+    }
+    
+    private fun isNetworkUnstable(): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return true
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return true
+        return !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
     
     fun loadHomeData() {
