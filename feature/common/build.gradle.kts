@@ -31,9 +31,20 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.0"
+    }
 }
 
 dependencies {
+    implementation(project(":uicomponent"))
+    implementation(platform("androidx.compose:compose-bom:2024.10.01"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material3:material3")
+
     // Raamcosta Navigation
     implementation("io.github.raamcosta.compose-destinations:core:1.9.63")
     ksp("io.github.raamcosta.compose-destinations:ksp:1.9.63")
@@ -52,5 +63,5 @@ kotlin {
 
 ksp {
     arg("compose-destinations.mode", "destinations")
-    arg("compose-destinations.moduleName", "feature:folder")
+    arg("compose-destinations.moduleName", "feature:common")
 }

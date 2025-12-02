@@ -3,19 +3,21 @@ package com.android.swingmusic.home.presentation
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,8 +37,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.android.swingmusic.common.presentation.component.TopSearchBar
 import com.android.swingmusic.common.presentation.navigator.CommonNavigator
 import com.android.swingmusic.core.domain.model.Folder
 import com.android.swingmusic.core.domain.model.Track
@@ -49,7 +53,6 @@ import com.android.swingmusic.uicomponent.R as UiComponent
 import com.ramcosta.composedestinations.annotation.Destination
 import java.util.Calendar
 
-@OptIn(ExperimentalLayoutApi::class)
 @Destination
 @Composable
 fun Home(
@@ -107,24 +110,33 @@ fun Home(
     val greeting = remember { resolveGreeting() }
     val currentTrackTitle = playerUiState.nowPlayingTrack?.title
 
-    val quickActions = remember(navigator) {
+    val libraryActions = remember(navigator) {
         listOf(
-            QuickAction(UiComponent.drawable.folder_filled, "Library") { navigator.gotoFolders() },
-            QuickAction(UiComponent.drawable.ic_album, "Albums") { navigator.gotoAlbumLibrary() },
-            QuickAction(UiComponent.drawable.ic_artist, "Artists") { navigator.gotoArtistLibrary() },
-            QuickAction(UiComponent.drawable.ic_search, "Search") { navigator.gotoSearch() }
+            LibraryAction(UiComponent.drawable.folder_filled, "Folders") { navigator.gotoFolders() },
+            LibraryAction(UiComponent.drawable.ic_album, "Albums") { navigator.gotoAlbumLibrary() },
+            LibraryAction(UiComponent.drawable.ic_artist, "Artists") { navigator.gotoArtistLibrary() },
+            LibraryAction(UiComponent.drawable.play_list, "Playlists") { navigator.gotoSearch() },
+            LibraryAction(UiComponent.drawable.fav_filled, "Favorites") { navigator.gotoSearch() },
+            LibraryAction(UiComponent.drawable.play_arrow_fill, "Fav. tracks") { navigator.gotoSearch() },
+            LibraryAction(UiComponent.drawable.ic_artist, "Fav. artists") { navigator.gotoSearch() },
+            LibraryAction(UiComponent.drawable.ic_album, "Fav. albums") { navigator.gotoSearch() }
         )
     }
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-        contentPadding = PaddingValues(top = 24.dp, bottom = 96.dp)
+            .padding(horizontal = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        contentPadding = PaddingValues(top = 20.dp, bottom = 96.dp)
     ) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                TopSearchBar(
+                    onSearchClick = navigator::gotoSearch,
+                    onAvatarClick = navigator::gotoSearch
+                )
+
                 Text(
                     text = greeting,
                     style = MaterialTheme.typography.headlineSmall,
@@ -139,11 +151,10 @@ fun Home(
         }
 
         item {
-            SearchCard(onClick = navigator::gotoSearch)
-        }
-
-        item {
-            QuickActionGrid(actions = quickActions)
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                SectionHeader(title = "Browse Library")
+                LibraryActionGrid(actions = libraryActions)
+            }
         }
 
         if (continueListening.isNotEmpty()) {
@@ -256,35 +267,68 @@ private fun SearchCard(onClick: () -> Unit) {
 }
 
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
-private fun QuickActionGrid(actions: List<QuickAction>) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        actions.forEach { action ->
-            Surface(
-                shape = MaterialTheme.shapes.small,
-                tonalElevation = 1.dp,
-                modifier = Modifier.clickable(onClick = action.onClick)
+private fun LibraryActionGrid(actions: List<LibraryAction>) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        actions.chunked(2).forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                row.forEach { action ->
+                    LibraryActionCard(
+                        modifier = Modifier.weight(1f),
+                        action = action
+                    )
+                }
+
+                if (row.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LibraryActionCard(
+    modifier: Modifier = Modifier,
+    action: LibraryAction
+) {
+    Surface(
+        modifier = modifier
+            .height(72.dp)
+            .clickable(onClick = action.onClick),
+        tonalElevation = 2.dp,
+        shape = RoundedCornerShape(18.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Surface(
+                modifier = Modifier.size(38.dp),
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = .12f)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
                     Icon(
                         painter = painterResource(id = action.iconRes),
                         contentDescription = action.label,
                         tint = MaterialTheme.colorScheme.primary
                     )
-                    Text(
-                        text = action.label,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
                 }
             }
+
+            Text(
+                text = action.label,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -297,27 +341,31 @@ private fun ContinueListeningRow(
     onPlayTrack: (Track) -> Unit
 ) {
     LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(tracks, key = { it.trackHash }) { track ->
-            val isCurrent = nowPlayingHash == track.trackHash
+            val isActive = track.trackHash == nowPlayingHash
             Surface(
                 modifier = Modifier
-                    .size(width = 160.dp, height = 220.dp)
+                    .width(220.dp)
                     .clickable { onPlayTrack(track) },
-                shape = MaterialTheme.shapes.medium,
-                tonalElevation = if (isCurrent) 6.dp else 2.dp,
-                border = if (isCurrent) BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = .4f)) else null
+                shape = RoundedCornerShape(20.dp),
+                tonalElevation = if (isActive) 6.dp else 2.dp,
+                border = if (isActive) {
+                    BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+                } else {
+                    null
+                }
             ) {
                 Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     AsyncImage(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(120.dp)
-                            .clip(MaterialTheme.shapes.small),
+                            .clip(RoundedCornerShape(16.dp)),
                         model = ImageRequest.Builder(LocalContext.current)
                             .data("${baseUrl}img/thumbnail/${track.image}")
                             .crossfade(true)
@@ -325,19 +373,21 @@ private fun ContinueListeningRow(
                         placeholder = painterResource(id = UiComponent.drawable.audio_fallback),
                         contentDescription = track.title
                     )
-                    Text(
-                        text = track.title,
-                        style = MaterialTheme.typography.bodyMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = track.trackArtists.joinToString(", ") { it.name },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            text = track.title,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Text(
+                            text = track.trackArtists.joinToString(", ") { it.name },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
         }
@@ -516,7 +566,7 @@ private data class ArtistHighlight(
     val name: String
 )
 
-private data class QuickAction(
+private data class LibraryAction(
     val iconRes: Int,
     val label: String,
     val onClick: () -> Unit

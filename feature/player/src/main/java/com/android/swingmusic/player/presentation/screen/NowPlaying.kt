@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.android.swingmusic.common.presentation.component.TopSearchBar
 import com.android.swingmusic.common.presentation.navigator.CommonNavigator
 import com.android.swingmusic.core.domain.model.Track
 import com.android.swingmusic.core.domain.model.TrackArtist
@@ -107,7 +108,9 @@ private fun NowPlaying(
     onClickMore: () -> Unit,
     onClickLyricsIcon: () -> Unit,
     onToggleFavorite: (Boolean, String) -> Unit,
-    onClickQueueIcon: () -> Unit
+    onClickQueueIcon: () -> Unit,
+    onSearchClick: () -> Unit,
+    onAvatarClick: () -> Unit
 ) {
     if (track == null) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -237,6 +240,16 @@ private fun NowPlaying(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                TopSearchBar(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                    onSearchClick = onSearchClick,
+                    onAvatarClick = onAvatarClick
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 // Artwork, SeekBar...
                 HorizontalPager(
                     modifier = Modifier.fillMaxWidth(),
@@ -689,7 +702,9 @@ fun NowPlayingScreen(
             mediaControllerViewModel.onPlayerUiEvent(
                 PlayerUiEvent.OnClickMore
             )
-        }
+        },
+        onSearchClick = navigator::gotoSearch,
+        onAvatarClick = navigator::gotoSearch
     )
 }
 
@@ -762,7 +777,9 @@ fun FullPlayerPreview() {
             onClickLyricsIcon = {},
             onToggleFavorite = { _, _ -> },
             onClickQueueIcon = {},
-            onClickMore = {}
+            onClickMore = {},
+            onSearchClick = {},
+            onAvatarClick = {}
         )
     }
 }

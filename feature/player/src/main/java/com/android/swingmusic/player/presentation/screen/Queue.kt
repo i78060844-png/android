@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -53,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.android.swingmusic.common.presentation.component.TopSearchBar
 import com.android.swingmusic.common.presentation.navigator.CommonNavigator
 import com.android.swingmusic.core.domain.model.BottomSheetItemModel
 import com.android.swingmusic.core.domain.model.Track
@@ -89,6 +91,8 @@ private fun Queue(
     onClickQueueItem: (index: Int) -> Unit,
     onGetSheetAction: (track: Track, sheetAction: BottomSheetAction) -> Unit,
     onGotoArtist: (hash: String) -> Unit,
+    onSearchClick: () -> Unit,
+    onAvatarClick: () -> Unit,
 ) {
     val lazyColumnState = rememberLazyListState()
     val interactionSource = remember { MutableInteractionSource() }
@@ -206,28 +210,35 @@ private fun Queue(
                 )
         )
 
+        val upNextTrackIndex = if (playingTrack != null) {
+            val nextIdx = playingTrackIndex + 1
+            if (nextIdx in queue.indices) nextIdx else null
+        } else null
+        val upNextTrack = upNextTrackIndex?.let(queue::getOrNull)
+
         Scaffold(
             modifier = Modifier
                 .padding(outerPadding)
                 .fillMaxSize(),
             containerColor = Color.Transparent,
             topBar = {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(
-                            bottom = 4.dp,
-                            top = 16.dp,
-                            start = 12.dp,
-                        ),
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    TopSearchBar(
+                        onSearchClick = onSearchClick,
+                        onAvatarClick = onAvatarClick
+                    )
                     Text(
-                        text = "Now Playing",
+                        text = "Queue",
                         style = MaterialTheme.typography.headlineMedium
                     )
                 }
-            }, bottomBar = {
+            },
+            bottomBar = {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -236,177 +247,216 @@ private fun Queue(
                 )
             }
         ) { paddingValues ->
-            if (playingTrack != null) {
-                Column(
-                    modifier = Modifier
-                        .padding(paddingValues)
-                        .padding(horizontal = 12.dp)
-                        .fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .padding(bottom = 4.dp)
-                            .clickable(
-                                indication = null,
-                                interactionSource = interactionSource
-                            ) {
-                                onClickQueueSource(source)
-                            },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = source.getSourceType(),
-                            style = TextStyle(
-                                fontSize = 11.sp
-                            ),
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .94F)
-                        )
-
-                        if (source.getName().isNotEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .padding(horizontal = 8.dp)
-                                    .size(4.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = .36F))
-                            )
-
-                            Text(
-                                text = source.getName(),
-                                style = TextStyle(
-                                    fontSize = 11.sp
-                                ),
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .94F)
-                            )
-                        }
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .padding(vertical = 16.dp)
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = .14F))
-                            .clickable {
-                                onTogglePlayerState()
-                            }
-                            .padding(8.dp),
-                        contentAlignment = Alignment.CenterStart,
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth(0.8F),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                AsyncImage(
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data("${baseUrl}img/thumbnail/small/${playingTrack.image}")
-                                        .crossfade(true)
-                                        .build(),
-                                    placeholder = painterResource(R.drawable.audio_fallback),
-                                    fallback = painterResource(R.drawable.audio_fallback),
-                                    error = painterResource(R.drawable.audio_fallback),
-                                    contentDescription = "Track Image",
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier
-                                        .size(60.dp)
-                                        .clip(RoundedCornerShape(6.dp))
-                                )
-
-                                Column(modifier = Modifier.padding(horizontal = 12.dp)) {
-                                    Text(
-                                        text = playingTrack.title,
-                                        modifier = Modifier.sizeIn(maxWidth = 300.dp),
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        fontWeight = Bold,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-
-                                    Spacer(modifier = Modifier.height(8.dp))
-
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        val artists =
-                                            playingTrack.trackArtists.joinToString(", ") { it.name }
-
-                                        Text(
-                                            text = artists,
-                                            modifier = Modifier.sizeIn(maxWidth = 185.dp),
-                                            color = MaterialTheme.colorScheme.onSurface.copy(
-                                                alpha = .80F
-                                            ),
-                                            style = MaterialTheme.typography.bodySmall,
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    }
-                                }
-                            }
-
-                            // Sound Bars
-                            Box(
-                                modifier = Modifier
-                                    .size(50.dp)
-                                    .padding(end = 8.dp)
-                            ) {
-                                if (playbackState == PlaybackState.PLAYING) {
-                                    SoundSignalBars(animate = true)
-                                } else {
-                                    SoundSignalBars(animate = false)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
             LazyColumn(
                 state = lazyColumnState,
                 modifier = Modifier
                     .background(Color.Transparent)
                     .padding(paddingValues)
-                    .padding(top = 128.dp)
-                    .fillMaxSize()
+                    .padding(horizontal = 12.dp)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+                contentPadding = PaddingValues(bottom = 48.dp)
             ) {
-                if (playingTrack == null) {
-                    item {}
-                } else {
-                    itemsIndexed(
-                        items = queue,
-                        key = { index: Int, track: Track -> "$index:${track.filepath}" }
-                    ) { index, track ->
+                if (playingTrack != null) {
+                    item {
+                        QueueSourceRow(
+                            source = source,
+                            interactionSource = interactionSource,
+                            onClickQueueSource = onClickQueueSource
+                        )
+                    }
+
+                    item {
+                        CurrentTrackCard(
+                            track = playingTrack,
+                            baseUrl = baseUrl,
+                            playbackState = playbackState,
+                            onTogglePlayerState = onTogglePlayerState
+                        )
+                    }
+                }
+
+                upNextTrack?.let { track ->
+                    item {
+                        QueueSectionTitle(text = "Up Next")
+                    }
+
+                    item {
                         TrackItem(
                             track = track,
                             playbackState = playbackState,
-                            isCurrentTrack = index == playingTrackIndex,
+                            isCurrentTrack = false,
                             baseUrl = baseUrl,
                             showMenuIcon = true,
                             onClickTrackItem = {
-                                onClickQueueItem(index)
+                                upNextTrackIndex?.let(onClickQueueItem)
                             },
                             onClickMoreVert = {
                                 clickedTrack = it
                                 showTrackBottomSheet = true
                             }
                         )
+                    }
+                }
 
-                        if (index == queue.lastIndex) {
-                            Spacer(modifier = Modifier.height(16.dp))
+                item {
+                    QueueSectionTitle(text = "Queue")
+                }
+
+                itemsIndexed(
+                    items = queue,
+                    key = { index: Int, track: Track -> "$index:${track.filepath}" }
+                ) { index, track ->
+                    TrackItem(
+                        track = track,
+                        playbackState = playbackState,
+                        isCurrentTrack = index == playingTrackIndex,
+                        baseUrl = baseUrl,
+                        showMenuIcon = true,
+                        onClickTrackItem = {
+                            onClickQueueItem(index)
+                        },
+                        onClickMoreVert = {
+                            clickedTrack = it
+                            showTrackBottomSheet = true
                         }
+                    )
+
+                    if (index == queue.lastIndex) {
+                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun QueueSourceRow(
+    source: QueueSource,
+    interactionSource: MutableInteractionSource,
+    onClickQueueSource: (QueueSource) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(
+                indication = null,
+                interactionSource = interactionSource
+            ) { onClickQueueSource(source) },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = source.getSourceType(),
+            style = TextStyle(fontSize = 11.sp),
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .94f)
+        )
+
+        if (source.getName().isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .size(4.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = .36f))
+            )
+
+            Text(
+                text = source.getName(),
+                style = TextStyle(fontSize = 11.sp),
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .94f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun CurrentTrackCard(
+    track: Track,
+    baseUrl: String,
+    playbackState: PlaybackState,
+    onTogglePlayerState: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = .14f))
+            .clickable(onClick = onTogglePlayerState)
+            .padding(8.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(0.8f),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data("${baseUrl}img/thumbnail/small/${track.image}")
+                        .crossfade(true)
+                        .build(),
+                    placeholder = painterResource(R.drawable.audio_fallback),
+                    fallback = painterResource(R.drawable.audio_fallback),
+                    error = painterResource(R.drawable.audio_fallback),
+                    contentDescription = "Track Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(60.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                )
+
+                Column(modifier = Modifier.padding(horizontal = 12.dp)) {
+                    Text(
+                        text = track.title,
+                        modifier = Modifier.sizeIn(maxWidth = 300.dp),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    val artists = track.trackArtists.joinToString(", ") { it.name }
+
+                    Text(
+                        text = artists,
+                        modifier = Modifier.sizeIn(maxWidth = 185.dp),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = .80f),
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .padding(end = 8.dp)
+            ) {
+                SoundSignalBars(animate = playbackState == PlaybackState.PLAYING)
+            }
+        }
+    }
+}
+
+@Composable
+private fun QueueSectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold
+    )
 }
 
 /**
@@ -465,7 +515,9 @@ fun QueueScreen(
             mediaControllerViewModel.onPlayerUiEvent(
                 PlayerUiEvent.OnToggleFavorite(trackHash, isFavorite)
             )
-        }
+        },
+        onSearchClick = navigator::gotoSearch,
+        onAvatarClick = navigator::gotoSearch
     )
 }
 
@@ -521,7 +573,9 @@ fun QueuePreview() {
             onClickQueueItem = {},
             onGetSheetAction = { _, _ -> },
             onGotoArtist = {},
-            onToggleTrackFavorite = { _, _ -> }
+            onToggleTrackFavorite = { _, _ -> },
+            onSearchClick = {},
+            onAvatarClick = {}
         )
     }
 }
