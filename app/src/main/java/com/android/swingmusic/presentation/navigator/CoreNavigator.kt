@@ -10,6 +10,7 @@ import com.android.swingmusic.common.presentation.navigator.CommonNavigator
 import com.android.swingmusic.folder.presentation.screen.destinations.FoldersAndTracksPaginatedScreenDestination
 import com.android.swingmusic.home.presentation.destinations.HomeDestination
 import com.android.swingmusic.player.presentation.screen.destinations.QueueScreenDestination
+import com.android.swingmusic.search.presentation.screen.destinations.SearchScreenDestination
 import com.android.swingmusic.search.presentation.screen.destinations.ViewAllSearchResultsDestination
 import com.ramcosta.composedestinations.navigation.navigate
 
@@ -72,6 +73,42 @@ class CoreNavigator(
                 inclusive = true
                 saveState = false
             }
+        }
+    }
+
+    override fun gotoAlbumLibrary() {
+        val targetDestination = AllAlbumScreenDestination
+
+        navController.navigate(targetDestination) {
+            launchSingleTop = true
+            restoreState = false
+
+            popUpTo(navController.graph.startDestinationId) {
+                inclusive = false
+                saveState = false
+            }
+        }
+    }
+
+    override fun gotoArtistLibrary() {
+        val targetDestination = AllArtistsScreenDestination
+
+        navController.navigate(targetDestination) {
+            launchSingleTop = true
+            restoreState = false
+
+            popUpTo(navController.graph.startDestinationId) {
+                inclusive = false
+                saveState = false
+            }
+        }
+    }
+
+    override fun gotoSearch() {
+        val targetDestination = SearchScreenDestination
+
+        navController.navigate(targetDestination) {
+            launchSingleTop = true
         }
     }
 

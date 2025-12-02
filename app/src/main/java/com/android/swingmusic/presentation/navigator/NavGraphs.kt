@@ -21,9 +21,8 @@ object NavGraphs {
     fun root(isUserLoggedIn: Boolean) = object : NavGraphSpec {
         override val route: String = "root"
 
-        // TODO: Use Home instead of Folder as the startRoute
         override val startRoute: Route =
-            if (isUserLoggedIn) FoldersAndTracksPaginatedScreenDestination else LoginWithQrCodeDestination
+            if (isUserLoggedIn) HomeDestination else LoginWithQrCodeDestination
 
         override val destinationsByRoute: Map<String, DestinationSpec<*>>
             get() {

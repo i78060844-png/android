@@ -11,6 +11,12 @@ interface CommonNavigator {
     // Todo: Remove this after adding home content
     fun gotoFolders()
 
+    fun gotoAlbumLibrary()
+
+    fun gotoArtistLibrary()
+
+    fun gotoSearch()
+
     fun gotoAlbumWithInfo(albumHash: String)
 
     fun navigateBack()
