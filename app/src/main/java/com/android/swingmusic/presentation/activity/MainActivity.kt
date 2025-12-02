@@ -72,7 +72,6 @@ import com.android.swingmusic.search.presentation.screen.destinations.ViewAllSea
 import com.android.swingmusic.search.presentation.viewmodel.SearchViewModel
 import com.android.swingmusic.service.PlaybackService
 import com.android.swingmusic.service.SessionTokenManager
-import com.android.swingmusic.uicomponent.presentation.theme.SwingMusicTheme
 import com.google.accompanist.navigation.material.ExperimentalMaterialNavigationApi
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
@@ -85,7 +84,7 @@ import com.ramcosta.composedestinations.utils.destination
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import com.android.swingmusic.uicomponent.R as UiComponent
+import com.android.swingmusic.uicomponent.presentation.theme.SwingMusicTheme
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
