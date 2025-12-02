@@ -42,6 +42,7 @@ dependencies {
     // Local Modules
     implementation(project(":auth"))
     implementation(project(":core"))
+    implementation(project(":database"))
     implementation(project(":network"))
     implementation(project(":uicomponent"))
     implementation(project(":feature:player"))
