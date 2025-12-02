@@ -57,18 +57,20 @@ class EndlessSoundRepositoryImpl @Inject constructor(
         val cached = cachedTrackDao.getValidCachedTrack(trackHash)
         if (cached != null) {
             val cacheFile = File(cached.cacheFilePath)
-            if (cacheFile.exists()) {
-                Timber.tag("EndlessSound").d("Cache HIT: $trackHash")
+            // Double check file exists and has content
+            if (cacheFile.exists() && cacheFile.length() > 0) {
+                Timber.tag("EndlessSound").d("Cache HIT: $trackHash (${cacheFile.length() / 1024}KB, tier=${cached.tierOrdinal})")
                 cachedTrackDao.updateLastAccessed(trackHash)
                 recordCacheHit(cacheFile.length())
                 return@withContext Uri.fromFile(cacheFile).toString()
             } else {
-                // Cache entry exists but file is missing, clean up
+                // Cache entry exists but file is missing/empty, clean up
+                Timber.tag("EndlessSound").w("Cache INVALID: $trackHash - file missing or empty")
                 cachedTrackDao.deleteCachedTrack(trackHash)
             }
         }
         
-        Timber.tag("EndlessSound").d("Cache MISS: $trackHash")
+        Timber.tag("EndlessSound").d("Cache MISS: $trackHash - returning streaming URL")
         recordCacheMiss()
         
         // Return original URL - track will be cached during playback
@@ -77,7 +79,11 @@ class EndlessSoundRepositoryImpl @Inject constructor(
     
     override suspend fun isCached(trackHash: String): Boolean = withContext(Dispatchers.IO) {
         val cached = cachedTrackDao.getValidCachedTrack(trackHash)
-        cached != null && File(cached.cacheFilePath).exists()
+        val result = cached != null && File(cached.cacheFilePath).let { it.exists() && it.length() > 0 }
+        if (result) {
+            Timber.tag("EndlessSound").v("Track $trackHash is cached")
+        }
+        result
     }
     
     override suspend fun getCachedTrack(trackHash: String): CachedTrack? = withContext(Dispatchers.IO) {
@@ -90,11 +96,24 @@ class EndlessSoundRepositoryImpl @Inject constructor(
         baseUrl: String
     ) = withContext(Dispatchers.IO) {
         // Skip if already cached or downloading
-        if (isCached(trackHash)) return@withContext
+        if (isCached(trackHash)) {
+            Timber.tag("EndlessSound").d("Skip download: $trackHash already cached")
+            return@withContext
+        }
         
-        downloadMutex.withLock {
-            if (activeDownloads.contains(trackHash)) return@withContext
-            activeDownloads.add(trackHash)
+        // Check if already downloading
+        val alreadyDownloading = downloadMutex.withLock {
+            if (activeDownloads.contains(trackHash)) {
+                true
+            } else {
+                activeDownloads.add(trackHash)
+                false
+            }
+        }
+        
+        if (alreadyDownloading) {
+            Timber.tag("EndlessSound").d("Skip download: $trackHash already downloading")
+            return@withContext
         }
         
         try {
@@ -102,6 +121,7 @@ class EndlessSoundRepositoryImpl @Inject constructor(
             if (config.enableAutoCleanup) {
                 val currentSize = cachedTrackDao.getTotalCacheSize() ?: 0
                 if (currentSize > config.maxCacheSizeBytes * config.cleanupThresholdPercent) {
+                    Timber.tag("EndlessSound").d("Running cleanup before download: ${currentSize / 1024 / 1024}MB > ${(config.maxCacheSizeBytes * config.cleanupThresholdPercent) / 1024 / 1024}MB")
                     cleanup()
                 }
             }
@@ -109,7 +129,7 @@ class EndlessSoundRepositoryImpl @Inject constructor(
             val url = buildTrackUrl(baseUrl, trackHash, originalPath)
             val cacheFile = File(cacheDir, "$trackHash.audio")
             
-            Timber.tag("EndlessSound").d("Downloading: $trackHash")
+            Timber.tag("EndlessSound").d("Starting download: $trackHash from $url")
             
             val requestBuilder = Request.Builder().url(url)
             
@@ -124,6 +144,13 @@ class EndlessSoundRepositoryImpl @Inject constructor(
                 response.body?.let { body ->
                     cacheFile.outputStream().use { output ->
                         body.byteStream().copyTo(output)
+                    }
+                    
+                    // Verify file was written successfully
+                    if (!cacheFile.exists() || cacheFile.length() == 0L) {
+                        Timber.tag("EndlessSound").e("Download failed: file not created or empty for $trackHash")
+                        cacheFile.delete()
+                        return@withContext
                     }
                     
                     val now = System.currentTimeMillis()
@@ -144,13 +171,13 @@ class EndlessSoundRepositoryImpl @Inject constructor(
                     cachedTrackDao.insertCachedTrack(entity)
                     recordDownload(cacheFile.length())
                     
-                    Timber.tag("EndlessSound").d("Cached: $trackHash (${cacheFile.length() / 1024}KB)")
+                    Timber.tag("EndlessSound").d("Cached successfully: $trackHash (${cacheFile.length() / 1024}KB, tier=${tier.name})")
                 }
             } else {
-                Timber.tag("EndlessSound").e("Download failed: ${response.code}")
+                Timber.tag("EndlessSound").e("Download failed: ${response.code} for $trackHash")
             }
         } catch (e: Exception) {
-            Timber.tag("EndlessSound").e("Cache error: ${e.message}")
+            Timber.tag("EndlessSound").e("Cache error for $trackHash: ${e.message}")
         } finally {
             downloadMutex.withLock {
                 activeDownloads.remove(trackHash)
@@ -165,6 +192,10 @@ class EndlessSoundRepositoryImpl @Inject constructor(
     ) = withContext(Dispatchers.IO) {
         val isValidReplay = startPositionSec <= 6 && listenedDurationSec >= 15
         
+        Timber.tag("EndlessSound").d(
+            "Replay session: $trackHash (start=${startPositionSec}s, listened=${listenedDurationSec}s, valid=$isValidReplay)"
+        )
+        
         val session = ReplaySessionEntity(
             trackHash = trackHash,
             startPositionSec = startPositionSec,
@@ -177,21 +208,31 @@ class EndlessSoundRepositoryImpl @Inject constructor(
         
         if (isValidReplay) {
             // Update TTL based on new replay count
-            val cached = cachedTrackDao.getCachedTrack(trackHash) ?: return@withContext
+            val cached = cachedTrackDao.getCachedTrack(trackHash)
+            if (cached == null) {
+                Timber.tag("EndlessSound").d("Cannot upgrade TTL: $trackHash not cached")
+                return@withContext
+            }
+            
             val newReplayCount = cached.replayCount + 1
             val newTier = CacheTier.fromReplayCount(newReplayCount)
+            val currentTier = CacheTier.entries[cached.tierOrdinal]
             
             if (newTier.ordinal > cached.tierOrdinal) {
                 val newExpiresAt = System.currentTimeMillis() + newTier.ttlMs
                 cachedTrackDao.incrementReplayCount(trackHash, newTier.ordinal, newExpiresAt)
                 
                 Timber.tag("EndlessSound").d(
-                    "TTL upgraded: $trackHash -> ${newTier.name} (${newTier.ttlMs / 3600000}h)"
+                    "TTL upgraded: $trackHash ${currentTier.name} -> ${newTier.name} (replays: ${cached.replayCount} -> $newReplayCount, ttl: ${newTier.ttlMs / 3600000}h)"
                 )
             } else {
                 // Just increment count, extend current TTL
-                val newExpiresAt = System.currentTimeMillis() + CacheTier.entries[cached.tierOrdinal].ttlMs
+                val newExpiresAt = System.currentTimeMillis() + currentTier.ttlMs
                 cachedTrackDao.incrementReplayCount(trackHash, cached.tierOrdinal, newExpiresAt)
+                
+                Timber.tag("EndlessSound").d(
+                    "TTL extended: $trackHash ${currentTier.name} (replays: ${cached.replayCount} -> $newReplayCount)"
+                )
             }
         }
     }
@@ -228,35 +269,59 @@ class EndlessSoundRepositoryImpl @Inject constructor(
     }
     
     override suspend fun cleanup() = withContext(Dispatchers.IO) {
-        Timber.tag("EndlessSound").d("Running cleanup...")
+        val startTime = System.currentTimeMillis()
+        Timber.tag("EndlessSound").d("Starting cleanup...")
         
         // Delete expired tracks
         val expired = cachedTrackDao.getExpiredTracks()
+        var freedSpace = 0L
         expired.forEach { entity ->
-            File(entity.cacheFilePath).delete()
+            val file = File(entity.cacheFilePath)
+            if (file.exists()) {
+                freedSpace += file.length()
+                file.delete()
+            }
         }
         cachedTrackDao.deleteExpiredTracks()
+        
+        if (expired.isNotEmpty()) {
+            Timber.tag("EndlessSound").d("Deleted ${expired.size} expired tracks, freed ${freedSpace / 1024 / 1024}MB")
+        }
         
         // Check if we still need to free space
         val currentSize = cachedTrackDao.getTotalCacheSize() ?: 0
         val targetSize = (config.maxCacheSizeBytes * config.cleanupTargetPercent).toLong()
         
         if (currentSize > targetSize) {
+            Timber.tag("EndlessSound").d("Need to free space: ${currentSize / 1024 / 1024}MB > ${targetSize / 1024 / 1024}MB")
+            
             // Evict LRU tracks until we're under target
             var sizeToFree = currentSize - targetSize
             val lruTracks = cachedTrackDao.getLeastRecentlyUsed(100)
+            var evicted = 0
             
             for (track in lruTracks) {
                 if (sizeToFree <= 0) break
                 
                 // Don't evict high-tier tracks unless necessary
-                if (track.tierOrdinal >= CacheTier.FAVORITE.ordinal) continue
+                if (track.tierOrdinal >= CacheTier.FAVORITE.ordinal && sizeToFree < currentSize * 0.5) {
+                    Timber.tag("EndlessSound").v("Skipping high-tier track: ${track.trackHash} (tier=${track.tierOrdinal})")
+                    continue
+                }
                 
-                File(track.cacheFilePath).delete()
+                val file = File(track.cacheFilePath)
+                if (file.exists()) {
+                    file.delete()
+                }
                 cachedTrackDao.deleteCachedTrack(track.trackHash)
                 sizeToFree -= track.fileSizeBytes
+                evicted++
                 
-                Timber.tag("EndlessSound").d("Evicted LRU: ${track.trackHash}")
+                Timber.tag("EndlessSound").v("Evicted LRU: ${track.trackHash} (${track.fileSizeBytes / 1024}KB)")
+            }
+            
+            if (evicted > 0) {
+                Timber.tag("EndlessSound").d("Evicted $evicted LRU tracks")
             }
         }
         
@@ -264,7 +329,9 @@ class EndlessSoundRepositoryImpl @Inject constructor(
         val thirtyDaysAgo = System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000
         cachedTrackDao.cleanupOldSessions(thirtyDaysAgo)
         
-        Timber.tag("EndlessSound").d("Cleanup complete")
+        val duration = System.currentTimeMillis() - startTime
+        val finalSize = cachedTrackDao.getTotalCacheSize() ?: 0
+        Timber.tag("EndlessSound").d("Cleanup complete in ${duration}ms, cache size: ${finalSize / 1024 / 1024}MB")
     }
     
     override suspend fun evictTrack(trackHash: String) {
