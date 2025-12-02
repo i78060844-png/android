@@ -2,6 +2,7 @@ plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android {
@@ -34,6 +35,9 @@ dependencies {
 
     // Gson
     implementation("com.google.code.gson:gson:2.10.1")
+    
+    // Kotlinx Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.57.2")

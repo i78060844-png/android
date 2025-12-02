@@ -1,5 +1,12 @@
 package com.android.swingmusic.player.presentation.screen
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -9,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,8 +30,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -86,6 +93,7 @@ import java.util.Locale
 @Composable
 fun BottomSheetPlayer(
     mediaControllerViewModel: MediaControllerViewModel,
+    bottomPadding: androidx.compose.ui.unit.Dp = 0.dp,
     onClickArtist: (artistHash: String) -> Unit,
     onClickQueueIcon: () -> Unit,
     content: @Composable () -> Unit
@@ -100,8 +108,8 @@ fun BottomSheetPlayer(
     )
     val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
     
-    val navigationBarHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val peekHeight = 64.dp + navigationBarHeight
+    // Mini player height + bottom padding (for navigation bar)
+    val peekHeight = 64.dp + bottomPadding
 
     val track = playerUiState.nowPlayingTrack
 
@@ -115,13 +123,18 @@ fun BottomSheetPlayer(
         scaffoldState = scaffoldState,
         sheetPeekHeight = peekHeight,
         sheetDragHandle = null,
-        sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        sheetContainerColor = MaterialTheme.colorScheme.surface,
+        sheetShape = RoundedCornerShape(0.dp),
+        sheetContainerColor = Color.Black,
         sheetContent = {
-            val isExpanded = sheetState.currentValue == SheetValue.Expanded
-
-            if (isExpanded) {
-                ExpandedPlayerContent(
+            // Use target state for smoother transitions
+            val targetExpanded = sheetState.targetValue == SheetValue.Expanded
+            val currentExpanded = sheetState.currentValue == SheetValue.Expanded
+            val isExpanded = targetExpanded || currentExpanded
+            
+            Box(modifier = Modifier.fillMaxSize()) {
+                // Show expanded content when expanding or expanded
+                if (isExpanded) {
+                    ExpandedPlayerContent(
                     track = track,
                     playingTrackIndex = playerUiState.playingTrackIndex,
                     queue = playerUiState.queue,
@@ -170,13 +183,17 @@ fun BottomSheetPlayer(
                         scope.launch { sheetState.partialExpand() }
                     }
                 )
-            } else {
-                CollapsedPlayerContent(
+                }
+                
+                // Show collapsed content when not expanded
+                if (!isExpanded) {
+                    CollapsedPlayerContent(
                     track = track,
                     playbackState = playerUiState.playbackState,
                     isBuffering = playerUiState.isBuffering,
                     seekPosition = playerUiState.seekPosition,
                     baseUrl = baseUrl ?: "",
+                    bottomPadding = bottomPadding,
                     onTogglePlaybackState = {
                         mediaControllerViewModel.onPlayerUiEvent(PlayerUiEvent.OnTogglePlayerState)
                     },
@@ -193,12 +210,13 @@ fun BottomSheetPlayer(
                         scope.launch { sheetState.expand() }
                     }
                 )
+                }
             }
         }
     ) { innerPadding ->
         Box(
             modifier = Modifier
-                .padding(innerPadding)
+                .padding(bottom = innerPadding.calculateBottomPadding())
                 .fillMaxSize()
         ) {
             content()
@@ -213,6 +231,7 @@ private fun CollapsedPlayerContent(
     isBuffering: Boolean,
     seekPosition: Float,
     baseUrl: String,
+    bottomPadding: androidx.compose.ui.unit.Dp,
     onTogglePlaybackState: () -> Unit,
     onResumePlayBackFromError: () -> Unit,
     onSwipeNext: () -> Unit,
@@ -225,7 +244,7 @@ private fun CollapsedPlayerContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
+            .padding(bottom = bottomPadding)
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
                     onDragEnd = {
@@ -242,9 +261,9 @@ private fun CollapsedPlayerContent(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) { onExpand() }
-            .background(Color(0xFF181818)) // Spotify dark card color
+            .background(Color.Black)
     ) {
-        // Progress bar at top - Spotify style
+        // Progress bar at top
         androidx.compose.material3.LinearProgressIndicator(
             modifier = Modifier
                 .fillMaxWidth()
@@ -254,7 +273,7 @@ private fun CollapsedPlayerContent(
             drawStopIndicator = {},
             strokeCap = StrokeCap.Square,
             color = Color(0xFF1DB954), // Spotify green
-            trackColor = Color(0xFF404040)
+            trackColor = Color.Transparent
         )
 
         Row(
@@ -306,12 +325,11 @@ private fun CollapsedPlayerContent(
                 }
             }
 
-            // Controls - Spotify style: just favorite and play button
+            // Controls - Play/Pause button with animation
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                // Play/Pause button - Spotify uses a white filled circle
                 IconButton(
                     onClick = {
                         if (playbackState == PlaybackState.ERROR) {
@@ -330,15 +348,34 @@ private fun CollapsedPlayerContent(
                             color = Color.White
                         )
                     } else {
-                        Icon(
-                            painter = painterResource(
-                                id = if (playbackState == PlaybackState.PLAYING)
-                                    R.drawable.pause_icon else R.drawable.play_arrow
-                            ),
-                            contentDescription = "Play/Pause",
-                            modifier = Modifier.size(28.dp),
-                            tint = Color.White
-                        )
+                        AnimatedContent(
+                            targetState = playbackState,
+                            transitionSpec = {
+                                (scaleIn(
+                                    initialScale = 0.8f,
+                                    animationSpec = tween(150)
+                                ) + fadeIn(animationSpec = tween(150)))
+                                    .togetherWith(
+                                        scaleOut(
+                                            targetScale = 0.8f,
+                                            animationSpec = tween(150)
+                                        ) + fadeOut(animationSpec = tween(150))
+                                    )
+                            },
+                            label = "MiniPlayPauseAnimation"
+                        ) { state ->
+                            val icon = when (state) {
+                                PlaybackState.PLAYING -> R.drawable.ic_pause_rounded
+                                PlaybackState.PAUSED -> R.drawable.ic_play_rounded
+                                PlaybackState.ERROR -> R.drawable.error
+                            }
+                            Icon(
+                                painter = painterResource(id = icon),
+                                contentDescription = "Play/Pause",
+                                modifier = Modifier.size(28.dp),
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
             }
@@ -372,34 +409,13 @@ private fun ExpandedPlayerContent(
     onClickQueueIcon: () -> Unit,
     onCollapse: () -> Unit
 ) {
-    val fileType by remember {
-        derivedStateOf {
-            track.filepath.substringAfterLast(".").uppercase(Locale.ROOT)
-        }
-    }
-
-    val inverseOnSurface = MaterialTheme.colorScheme.inverseOnSurface
-    val onSurface = MaterialTheme.colorScheme.onSurface
-    // AMOLED Spotify-style file type badge colors
-    val fileTypeBadgeColor = when (track.bitrate) {
-        in 321..1023 -> Color(0xFF0D2629)   // Dark teal for high quality
-        in 1024..Int.MAX_VALUE -> Color(0XFF2D2818)  // Dark gold for lossless
-        else -> inverseOnSurface
-    }
-    val fileTypeTextColor = when (track.bitrate) {
-        in 321..1023 -> Color(0XFF00D4FF)   // Cyan accent for high quality
-        in 1024..Int.MAX_VALUE -> Color(0XFFFFD700)  // Gold accent for lossless
-        else -> onSurface
-    }
-
-    val animateWave = playbackState == PlaybackState.PLAYING && isBuffering.not()
     val repeatModeIcon = when (repeatMode) {
-        RepeatMode.REPEAT_ONE -> R.drawable.repeat_one
-        else -> R.drawable.repeat_all
+        RepeatMode.REPEAT_ONE -> R.drawable.ic_repeat_one_rounded
+        else -> R.drawable.ic_repeat_rounded
     }
     val playbackStateIcon = when (playbackState) {
-        PlaybackState.PLAYING -> R.drawable.pause_icon
-        PlaybackState.PAUSED -> R.drawable.play_arrow
+        PlaybackState.PLAYING -> R.drawable.ic_pause_rounded
+        PlaybackState.PAUSED -> R.drawable.ic_play_rounded
         PlaybackState.ERROR -> R.drawable.error
     }
 
@@ -431,355 +447,289 @@ private fun ExpandedPlayerContent(
         }
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
+            .background(Color.Black)
             .statusBarsPadding()
+            .navigationBarsPadding()
+            .padding(horizontal = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        AsyncImage(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(),
-            model = ImageRequest.Builder(LocalContext.current)
-                .data("${baseUrl}img/thumbnail/${track.image}")
-                .crossfade(true)
-                .transformations(
-                    listOf(
-                        BlurTransformation(
-                            scale = 0.25f,
-                            radius = 25
-                        )
-                    )
-                )
-                .build(),
-            contentDescription = "Track Image",
-            contentScale = ContentScale.Crop
-        )
-
+        // Drag handle
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.surface.copy(alpha = .75F),
-                            MaterialTheme.colorScheme.surface.copy(alpha = 1F),
-                            MaterialTheme.colorScheme.surface.copy(alpha = 1F)
-                        )
-                    )
-                )
-        )
-
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+                .padding(top = 12.dp, bottom = 24.dp)
+                .pointerInput(Unit) {
+                    detectVerticalDragGestures { _, dragAmount ->
+                        if (dragAmount > 20) {
+                            onCollapse()
+                        }
+                    }
+                },
+            contentAlignment = Alignment.Center
         ) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp)
-                    .pointerInput(Unit) {
-                        detectVerticalDragGestures { _, dragAmount ->
-                            if (dragAmount > 20) {
-                                onCollapse()
-                            }
-                        }
-                    },
+                    .width(36.dp)
+                    .height(5.dp)
+                    .clip(RoundedCornerShape(2.5.dp))
+                    .background(Color(0xFF5C5C5C))
+            )
+        }
+
+        // Album art with pager
+        HorizontalPager(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            state = pagerState,
+            beyondViewportPageCount = 2,
+            verticalAlignment = Alignment.CenterVertically,
+        ) { page ->
+            val imageData = if (page == playingTrackIndex) {
+                "${baseUrl}img/thumbnail/${queue.getOrNull(playingTrackIndex)?.image ?: track.image}"
+            } else {
+                "${baseUrl}img/thumbnail/${queue.getOrNull(page)?.image ?: track.image}"
+            }
+            val pageOffset = pagerState.calculateCurrentOffsetForPage(page)
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Box(
+                AsyncImage(
                     modifier = Modifier
-                        .width(40.dp)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .graphicsLayer {
+                            val scale = lerp(1f, 0.85f, pageOffset)
+                            scaleX = scale
+                            scaleY = scale
+                        },
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(imageData)
+                        .crossfade(true)
+                        .build(),
+                    placeholder = painterResource(R.drawable.audio_fallback),
+                    fallback = painterResource(R.drawable.audio_fallback),
+                    error = painterResource(R.drawable.audio_fallback),
+                    contentDescription = "Track Image",
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Track title and artist
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = track.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    color = Color.White
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = track.trackArtists.joinToString(", ") { it.name },
+                    style = MaterialTheme.typography.bodyLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = Color(0xFFAAAAAA),
+                    modifier = Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        track.trackArtists.firstOrNull()?.let { onClickArtist(it.artistHash) }
+                    }
+                )
+            }
+            
+            IconButton(
+                onClick = { onToggleFavorite(track.isFavorite, track.trackHash) }
+            ) {
+                Icon(
+                    painter = painterResource(
+                        id = if (track.isFavorite) R.drawable.fav_filled else R.drawable.fav_not_filled
+                    ),
+                    contentDescription = "Favorite",
+                    tint = if (track.isFavorite) Color(0xFFFF2D55) else Color(0xFFAAAAAA)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Progress bar
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Slider(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(4.dp),
+                value = seekPosition,
+                onValueChange = { value -> onSeekPlayBack(value) },
+                colors = androidx.compose.material3.SliderDefaults.colors(
+                    thumbColor = Color.White,
+                    activeTrackColor = Color.White,
+                    inactiveTrackColor = Color(0xFF5C5C5C)
+                )
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    text = playbackDuration,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF8E8E8E)
+                )
+                Text(
+                    text = if (playbackState == PlaybackState.ERROR)
+                        track.duration.formatDuration() else "-$trackDuration",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF8E8E8E)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Main controls
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            // Previous
+            IconButton(
+                modifier = Modifier.size(64.dp),
+                onClick = onClickPrev
+            ) {
+                Icon(
+                    modifier = Modifier.size(44.dp),
+                    painter = painterResource(id = R.drawable.ic_skip_previous_rounded),
+                    contentDescription = "Previous",
+                    tint = Color.White
                 )
             }
 
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                HorizontalPager(
-                    modifier = Modifier.fillMaxWidth(),
-                    state = pagerState,
-                    beyondViewportPageCount = 2,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) { page ->
-                    val imageData = if (page == playingTrackIndex) {
-                        "${baseUrl}img/thumbnail/${queue.getOrNull(playingTrackIndex)?.image ?: track.image}"
-                    } else {
-                        "${baseUrl}img/thumbnail/${queue.getOrNull(page)?.image ?: track.image}"
-                    }
-                    val pageOffset = pagerState.calculateCurrentOffsetForPage(page)
-
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Spacer(modifier = Modifier.height(12.dp))
-                        AsyncImage(
-                            modifier = Modifier
-                                .size(320.dp)
-                                .clip(RoundedCornerShape(7))
-                                .graphicsLayer {
-                                    val scale = lerp(1f, 1.25f, pageOffset)
-                                    scaleX = scale
-                                    scaleY = scale
-                                    clip = true
-                                    shape = RoundedCornerShape(7)
-                                },
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(imageData)
-                                .crossfade(true)
-                                .build(),
-                            placeholder = painterResource(R.drawable.audio_fallback),
-                            fallback = painterResource(R.drawable.audio_fallback),
-                            error = painterResource(R.drawable.audio_fallback),
-                            contentDescription = "Track Image",
-                            contentScale = ContentScale.Crop
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.fillMaxWidth(.78F)) {
-                        Text(
-                            text = track.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontSize = 18.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        LazyRow(modifier = Modifier.fillMaxWidth()) {
-                            track.trackArtists.forEachIndexed { index, trackArtist ->
-                                item {
-                                    Text(
-                                        modifier = Modifier
-                                            .clickable(
-                                                onClick = { onClickArtist(trackArtist.artistHash) },
-                                                indication = null,
-                                                interactionSource = remember { MutableInteractionSource() }
-                                            ),
-                                        text = trackArtist.name,
-                                        maxLines = 1,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = .84F),
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    if (index != track.trackArtists.lastIndex) {
-                                        Text(
-                                            text = ", ",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .84F),
-                                        )
-                                    }
-                                }
+            // Play/Pause with animation
+            Box(
+                modifier = Modifier
+                    .size(72.dp)
+                    .clip(CircleShape)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {
+                            if (playbackState != PlaybackState.ERROR) {
+                                onTogglePlayerState()
+                            } else {
+                                onResumePlayBackFromError()
                             }
                         }
-                    }
-
-                    IconButton(
-                        modifier = Modifier.clip(CircleShape),
-                        onClick = { onToggleFavorite(track.isFavorite, track.trackHash) }
-                    ) {
-                        val icon = if (track.isFavorite) R.drawable.fav_filled else R.drawable.fav_not_filled
-                        Icon(
-                            painter = painterResource(id = icon),
-                            contentDescription = "Favorite"
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-                    Slider(
-                        modifier = Modifier.height(12.dp),
-                        value = seekPosition,
-                        onValueChange = { value -> onSeekPlayBack(value) }
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (isBuffering) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(44.dp),
+                        strokeCap = StrokeCap.Round,
+                        strokeWidth = 3.dp,
+                        color = Color.White
                     )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Text(
-                            text = playbackDuration,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .84F)
-                        )
-                        Text(
-                            text = if (playbackState == PlaybackState.ERROR)
-                                track.duration.formatDuration() else trackDuration,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .84F)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    // Prev button - Spotify style (no background)
-                    IconButton(
-                        modifier = Modifier.size(48.dp),
-                        onClick = onClickPrev
-                    ) {
+                } else {
+                    AnimatedContent(
+                        targetState = playbackState,
+                        transitionSpec = {
+                            (scaleIn(
+                                initialScale = 0.8f,
+                                animationSpec = tween(150)
+                            ) + fadeIn(animationSpec = tween(150)))
+                                .togetherWith(
+                                    scaleOut(
+                                        targetScale = 0.8f,
+                                        animationSpec = tween(150)
+                                    ) + fadeOut(animationSpec = tween(150))
+                                )
+                        },
+                        label = "PlayPauseAnimation"
+                    ) { state ->
+                        val icon = when (state) {
+                            PlaybackState.PLAYING -> R.drawable.ic_pause_rounded
+                            PlaybackState.PAUSED -> R.drawable.ic_play_rounded
+                            PlaybackState.ERROR -> R.drawable.error
+                        }
                         Icon(
-                            modifier = Modifier.size(32.dp),
-                            painter = painterResource(id = R.drawable.prev),
-                            contentDescription = "Prev",
+                            modifier = Modifier.size(72.dp),
+                            painter = painterResource(id = icon),
+                            contentDescription = "Play/Pause",
                             tint = Color.White
                         )
                     }
-
-                    // Play/Pause button - Spotify green circle
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFF1DB954)) // Spotify green
-                            .clickable(
-                                indication = null,
-                                interactionSource = remember { MutableInteractionSource() },
-                                onClick = {
-                                    if (playbackState != PlaybackState.ERROR) {
-                                        onTogglePlayerState()
-                                    } else {
-                                        onResumePlayBackFromError()
-                                    }
-                                }
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (isBuffering) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(32.dp),
-                                strokeCap = StrokeCap.Round,
-                                strokeWidth = 2.dp,
-                                color = Color.Black
-                            )
-                        } else if (playbackState == PlaybackState.ERROR) {
-                            Icon(
-                                modifier = Modifier.size(32.dp),
-                                painter = painterResource(id = R.drawable.error),
-                                tint = Color.Black,
-                                contentDescription = "Error state"
-                            )
-                        } else {
-                            Icon(
-                                modifier = Modifier.size(32.dp),
-                                tint = Color.Black,
-                                painter = painterResource(id = playbackStateIcon),
-                                contentDescription = "Play/Pause"
-                            )
-                        }
-                    }
-
-                    // Next button - Spotify style (no background)
-                    IconButton(
-                        modifier = Modifier.size(48.dp),
-                        onClick = onClickNext
-                    ) {
-                        Icon(
-                            modifier = Modifier.size(32.dp),
-                            painter = painterResource(id = R.drawable.next),
-                            tint = Color.White,
-                            contentDescription = "Next"
-                        )
-                    }
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(24))
-                    .background(fileTypeTextColor.copy(alpha = .075F))
-                    .wrapContentSize()
-                    .padding(8.dp)
+            // Next
+            IconButton(
+                modifier = Modifier.size(64.dp),
+                onClick = onClickNext
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = fileType,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = fileTypeTextColor
-                    )
-                    Text(
-                        text = " • ",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = fileTypeTextColor
-                    )
-                    Text(
-                        text = "${track.bitrate} Kbps",
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = fileTypeTextColor
-                    )
-                }
+                Icon(
+                    modifier = Modifier.size(44.dp),
+                    painter = painterResource(id = R.drawable.ic_skip_next_rounded),
+                    contentDescription = "Next",
+                    tint = Color.White
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Bottom controls row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            IconButton(onClick = onToggleRepeatMode) {
+                Icon(
+                    painter = painterResource(id = repeatModeIcon),
+                    contentDescription = "Repeat",
+                    tint = if (repeatMode == RepeatMode.REPEAT_OFF)
+                        Color(0xFF8E8E8E) else Color(0xFFFF2D55)
+                )
             }
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF181818)) // Spotify dark card
-                    .navigationBarsPadding()
-                    .padding(vertical = 12.dp, horizontal = 32.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                IconButton(onClick = onToggleRepeatMode) {
-                    Icon(
-                        painter = painterResource(id = repeatModeIcon),
-                        tint = if (repeatMode == RepeatMode.REPEAT_OFF)
-                            Color(0xFF6A6A6A)  // Subdued
-                        else Color(0xFF1DB954), // Spotify green when active
-                        contentDescription = "Repeat"
-                    )
-                }
+            IconButton(onClick = onToggleShuffleMode) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_shuffle_rounded),
+                    contentDescription = "Shuffle",
+                    tint = if (shuffleMode == ShuffleMode.SHUFFLE_OFF)
+                        Color(0xFF8E8E8E) else Color(0xFFFF2D55)
+                )
+            }
 
-                IconButton(onClick = onClickQueueIcon) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.play_list),
-                        tint = Color.White,
-                        contentDescription = "Queue"
-                    )
-                }
-
-                IconButton(onClick = onToggleShuffleMode) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.shuffle),
-                        tint = if (shuffleMode == ShuffleMode.SHUFFLE_OFF)
-                            Color(0xFF6A6A6A)  // Subdued
-                        else Color(0xFF1DB954), // Spotify green when active
-                        contentDescription = "Shuffle"
-                    )
-                }
+            IconButton(onClick = onClickQueueIcon) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_queue_music_rounded),
+                    contentDescription = "Queue",
+                    tint = Color(0xFF8E8E8E)
+                )
             }
         }
     }

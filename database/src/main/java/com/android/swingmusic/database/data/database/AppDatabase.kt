@@ -6,11 +6,17 @@ import androidx.room.TypeConverters
 import com.android.swingmusic.database.data.converter.Converters
 import com.android.swingmusic.database.data.dao.BaseUrlDao
 import com.android.swingmusic.database.data.dao.LastPlayedTrackDao
+import com.android.swingmusic.database.data.dao.ListeningHistoryDao
 import com.android.swingmusic.database.data.dao.QueueDao
 import com.android.swingmusic.database.data.dao.UserDao
+import com.android.swingmusic.database.data.entity.AlbumStatsCacheEntity
+import com.android.swingmusic.database.data.entity.ArtistStatsCacheEntity
 import com.android.swingmusic.database.data.entity.BaseUrlEntity
 import com.android.swingmusic.database.data.entity.LastPlayedTrackEntity
+import com.android.swingmusic.database.data.entity.ListeningEventEntity
+import com.android.swingmusic.database.data.entity.ListeningPatternEntity
 import com.android.swingmusic.database.data.entity.QueueEntity
+import com.android.swingmusic.database.data.entity.TrackStatsCacheEntity
 import com.android.swingmusic.database.data.entity.UserEntity
 
 @Database(
@@ -18,9 +24,15 @@ import com.android.swingmusic.database.data.entity.UserEntity
         QueueEntity::class,
         LastPlayedTrackEntity::class,
         BaseUrlEntity::class,
-        UserEntity::class
+        UserEntity::class,
+        // MusicForYou SDK entities
+        ListeningEventEntity::class,
+        TrackStatsCacheEntity::class,
+        ArtistStatsCacheEntity::class,
+        AlbumStatsCacheEntity::class,
+        ListeningPatternEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -33,4 +45,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun queueDao(): QueueDao
 
     abstract fun lastPlayedTrackDao(): LastPlayedTrackDao
+    
+    abstract fun listeningHistoryDao(): ListeningHistoryDao
 }

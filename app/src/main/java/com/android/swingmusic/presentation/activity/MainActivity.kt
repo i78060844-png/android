@@ -74,7 +74,6 @@ import com.google.common.util.concurrent.MoreExecutors
 import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.navigation.dependency
 import com.ramcosta.composedestinations.rememberNavHostEngine
-import com.ramcosta.composedestinations.utils.destination
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -122,20 +121,19 @@ class MainActivity : ComponentActivity() {
             val newBackStackEntry by navController.currentBackStackEntryAsState()
             val route = newBackStackEntry?.destination?.route
 
-            val chromeExcludedDestinations = listOf(
-                LoginWithUsernameScreenDestination,
-                LoginWithQrCodeDestination,
-                QueueScreenDestination
+            val chromeExcludedRoutes = listOf(
+                LoginWithUsernameScreenDestination.route,
+                LoginWithQrCodeDestination.route,
+                QueueScreenDestination.route
             )
 
             val shouldShowBottomBar =
                 route != null &&
-                        newBackStackEntry?.destination() !in chromeExcludedDestinations &&
+                        route !in chromeExcludedRoutes &&
                         isUserLoggedIn == true
 
             val navItems: List<BottomNavItem> = listOf(
                 BottomNavItem.Home,
-                BottomNavItem.Folder,
                 BottomNavItem.Album,
                 BottomNavItem.Artist,
                 BottomNavItem.Search,
@@ -160,81 +158,80 @@ class MainActivity : ComponentActivity() {
             )
 
             SwingMusicTheme {
-                BottomSheetPlayer(
-                    mediaControllerViewModel = mediaControllerViewModel,
-                    onClickArtist = { artistHash ->
-                        navController.navigate(
-                            ArtistInfoScreenDestination.route.replace("{artistHash}", artistHash)
-                        )
-                    },
-                    onClickQueueIcon = {
-                        navController.navigate(QueueScreenDestination.route)
-                    }
-                ) {
-                    Scaffold(
-                        modifier = Modifier.fillMaxSize(),
-                        contentWindowInsets = WindowInsets(0),
-                        bottomBar = {
-                            if (shouldShowBottomBar) {
-                                NavigationBar {
-                                    navItems.forEach { item ->
-                                        val isSelected = navRoutePrefixes[item]?.any { prefix ->
-                                            route?.startsWith(prefix) == true
-                                        } == true
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    contentWindowInsets = WindowInsets(0),
+                    bottomBar = {
+                        if (shouldShowBottomBar) {
+                            NavigationBar {
+                                navItems.forEach { item ->
+                                    val isSelected = navRoutePrefixes[item]?.any { prefix ->
+                                        route?.startsWith(prefix) == true
+                                    } == true
 
-                                        NavigationBarItem(
-                                            selected = isSelected,
-                                            onClick = {
-                                                if (!isSelected) {
-                                                    navController.navigate(item.destination.route) {
-                                                        launchSingleTop = true
-                                                        restoreState = false
+                                    NavigationBarItem(
+                                        selected = isSelected,
+                                        onClick = {
+                                            if (!isSelected) {
+                                                navController.navigate(item.destination.route) {
+                                                    launchSingleTop = true
+                                                    restoreState = false
 
-                                                        popUpTo(navController.graph.startDestinationId) {
-                                                            saveState = false
-                                                            inclusive = false
-                                                        }
+                                                    popUpTo(navController.graph.startDestinationId) {
+                                                        saveState = false
+                                                        inclusive = false
                                                     }
                                                 }
+                                            }
 
-                                                when (item) {
-                                                    BottomNavItem.Folder -> {
-                                                        foldersViewModel.onFolderUiEvent(
-                                                            FolderUiEvent.OnClickNavPath(
-                                                                folder = foldersViewModel.homeDir
-                                                            )
+                                            when (item) {
+                                                BottomNavItem.Folder -> {
+                                                    foldersViewModel.onFolderUiEvent(
+                                                        FolderUiEvent.OnClickNavPath(
+                                                            folder = foldersViewModel.homeDir
                                                         )
-                                                    }
-
-                                                    BottomNavItem.Search -> {
-                                                        searchViewModel.onSearchUiEvent(
-                                                            SearchUiEvent.OnClearSearchStates
-                                                        )
-                                                    }
-
-                                                    else -> Unit
+                                                    )
                                                 }
-                                            },
-                                            icon = {
-                                                Icon(
-                                                    painter = painterResource(id = item.icon),
-                                                    contentDescription = item.title
-                                                )
-                                            },
-                                            label = { Text(text = item.title) },
-                                            alwaysShowLabel = false,
-                                            colors = NavigationBarItemDefaults
-                                                .colors()
-                                        )
-                                    }
+
+                                                BottomNavItem.Search -> {
+                                                    searchViewModel.onSearchUiEvent(
+                                                        SearchUiEvent.OnClearSearchStates
+                                                    )
+                                                }
+
+                                                else -> Unit
+                                            }
+                                        },
+                                        icon = {
+                                            Icon(
+                                                painter = painterResource(id = item.icon),
+                                                contentDescription = item.title
+                                            )
+                                        },
+                                        label = { Text(text = item.title) },
+                                        alwaysShowLabel = true,
+                                        colors = NavigationBarItemDefaults
+                                            .colors()
+                                    )
                                 }
                             }
                         }
-                    ) { paddingValues ->
+                    }
+                ) { paddingValues ->
+                    BottomSheetPlayer(
+                        mediaControllerViewModel = mediaControllerViewModel,
+                        bottomPadding = paddingValues.calculateBottomPadding(),
+                        onClickArtist = { artistHash ->
+                            navController.navigate(
+                                ArtistInfoScreenDestination.route.replace("{artistHash}", artistHash)
+                            )
+                        },
+                        onClickQueueIcon = {
+                            navController.navigate(QueueScreenDestination.route)
+                        }
+                    ) {
                         Surface(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(bottom = paddingValues.calculateBottomPadding())
+                            modifier = Modifier.fillMaxSize()
                         ) {
                             AnimatedVisibility(
                                 visible = isUserLoggedIn == null,

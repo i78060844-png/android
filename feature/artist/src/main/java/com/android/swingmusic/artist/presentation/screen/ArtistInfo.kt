@@ -847,7 +847,10 @@ fun ArtistInfoScreen(
     }
 
     SwingMusicTheme {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.statusBars)
+        ) {
             PullToRefreshBox(
                 modifier = Modifier.fillMaxSize(),
                 isRefreshing = showOnRefreshIndicator,

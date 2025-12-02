@@ -16,7 +16,7 @@ sealed class BottomNavItem(
 ) {
     data object Home : BottomNavItem(
         title = "Home",
-        icon = UiComponent.drawable.ic_home,
+        icon = UiComponent.drawable.ic_home_rounded,
         destination = HomeDestination
     )
 
@@ -28,19 +28,19 @@ sealed class BottomNavItem(
 
     data object Album : BottomNavItem(
         title = "Albums",
-        icon = UiComponent.drawable.ic_album,
+        icon = UiComponent.drawable.ic_album_rounded,
         destination = AllAlbumScreenDestination
     )
 
     data object Artist : BottomNavItem(
         title = "Artists",
-        icon = UiComponent.drawable.ic_artist,
+        icon = UiComponent.drawable.ic_artist_rounded,
         destination = AllArtistsScreenDestination
     )
 
     data object Search : BottomNavItem(
         title = "Search",
-        icon = UiComponent.drawable.ic_search,
+        icon = UiComponent.drawable.ic_search_rounded,
         destination = SearchScreenDestination
     )
 }

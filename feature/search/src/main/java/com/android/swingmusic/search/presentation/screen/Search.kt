@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -126,7 +127,7 @@ private fun Search(
             )
         },
         topBar = {
-            Column {
+            Column(modifier = Modifier.statusBarsPadding()) {
                 Text(
                     modifier = Modifier.padding(
                         start = 16.dp,
