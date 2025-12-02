@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -123,12 +124,27 @@ fun Home(
         )
     }
 
+    val homeStats = remember(
+        playerUiState.queue,
+        foldersState.foldersAndTracks.folders,
+        continueListening,
+        artistHighlights
+    ) {
+        listOfNotNull(
+            playerUiState.queue.takeIf { it.isNotEmpty() }?.let { HomeStat("In queue", it.size.toString()) },
+            foldersState.foldersAndTracks.folders.takeIf { it.isNotEmpty() }
+                ?.let { HomeStat("Folders", it.size.toString()) },
+            artistHighlights.takeIf { it.isNotEmpty() }?.let { HomeStat("Artists", artistHighlights.size.toString()) },
+            continueListening.takeIf { it.isNotEmpty() }?.let { HomeStat("Listening", continueListening.size.toString()) }
+        ).take(3)
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        contentPadding = PaddingValues(top = 20.dp, bottom = 96.dp)
+        verticalArrangement = Arrangement.spacedBy(28.dp),
+        contentPadding = PaddingValues(top = 24.dp, bottom = 112.dp)
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -140,13 +156,20 @@ fun Home(
                 Text(
                     text = greeting,
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.SemiBold,
+                    color = HomeAccentColor
                 )
                 Text(
                     text = currentTrackTitle?.let { "Listening to $it" } ?: "Dive back into your music",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = HomeMutedColor
                 )
+            }
+        }
+
+        if (homeStats.isNotEmpty()) {
+            item {
+                HomeStatsRow(stats = homeStats)
             }
         }
 
@@ -243,7 +266,9 @@ private fun SearchCard(onClick: () -> Unit) {
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.medium,
-        tonalElevation = 2.dp
+        color = HomeCardColor,
+        border = BorderStroke(1.dp, HomeBorderColor),
+        tonalElevation = 0.dp
     ) {
         Row(
             modifier = Modifier
@@ -255,12 +280,73 @@ private fun SearchCard(onClick: () -> Unit) {
             Icon(
                 painter = painterResource(id = UiComponent.drawable.ic_search),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                tint = HomeMutedColor
             )
             Text(
                 text = "Search anything",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = HomeMutedColor
+            )
+        }
+    }
+}
+
+@Composable
+private fun HomeStatsRow(stats: List<HomeStat>) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        val primary = stats.firstOrNull()
+        val paddedStats = buildList<HomeStat?> {
+            addAll(stats)
+            repeat((3 - stats.size).coerceAtLeast(0)) { add(null) }
+        }.take(3)
+
+        paddedStats.forEach { stat ->
+            if (stat != null) {
+                HomeStatCard(
+                    modifier = Modifier.weight(1f),
+                    stat = stat,
+                    highlight = primary != null && stat == primary
+                )
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeStatCard(
+    modifier: Modifier = Modifier,
+    stat: HomeStat,
+    highlight: Boolean
+) {
+    Surface(
+        modifier = modifier.height(96.dp),
+        shape = RoundedCornerShape(20.dp),
+        color = if (highlight) HomeCardAltColor else HomeCardColor,
+        border = BorderStroke(1.dp, if (highlight) Color.White.copy(alpha = 0.2f) else HomeBorderColor),
+        tonalElevation = 0.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 18.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = stat.label.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                letterSpacing = 1.sp,
+                color = HomeMutedColor
+            )
+            Text(
+                text = stat.value,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                color = HomeAccentColor
             )
         }
     }
@@ -298,8 +384,10 @@ private fun LibraryActionCard(
         modifier = modifier
             .height(72.dp)
             .clickable(onClick = action.onClick),
-        tonalElevation = 2.dp,
-        shape = RoundedCornerShape(18.dp)
+        shape = RoundedCornerShape(18.dp),
+        color = HomeCardColor,
+        border = BorderStroke(1.dp, HomeBorderColor),
+        tonalElevation = 0.dp
     ) {
         Row(
             modifier = Modifier
@@ -311,13 +399,14 @@ private fun LibraryActionCard(
             Surface(
                 modifier = Modifier.size(38.dp),
                 shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.primary.copy(alpha = .12f)
+                color = HomeCardAltColor,
+                border = BorderStroke(1.dp, HomeBorderColor)
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
                         painter = painterResource(id = action.iconRes),
                         contentDescription = action.label,
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = HomeAccentColor
                     )
                 }
             }
@@ -326,6 +415,7 @@ private fun LibraryActionCard(
                 text = action.label,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
+                color = HomeAccentColor,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -345,17 +435,19 @@ private fun ContinueListeningRow(
     ) {
         items(tracks, key = { it.trackHash }) { track ->
             val isActive = track.trackHash == nowPlayingHash
+            val border = if (isActive) {
+                BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
+            } else {
+                BorderStroke(1.dp, HomeBorderColor)
+            }
             Surface(
                 modifier = Modifier
                     .width(220.dp)
                     .clickable { onPlayTrack(track) },
                 shape = RoundedCornerShape(20.dp),
-                tonalElevation = if (isActive) 6.dp else 2.dp,
-                border = if (isActive) {
-                    BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
-                } else {
-                    null
-                }
+                color = HomeCardAltColor,
+                tonalElevation = 0.dp,
+                border = border
             ) {
                 Column(
                     modifier = Modifier.padding(16.dp),
@@ -377,13 +469,14 @@ private fun ContinueListeningRow(
                         Text(
                             text = track.title,
                             style = MaterialTheme.typography.bodyMedium,
+                            color = HomeAccentColor,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = track.trackArtists.joinToString(", ") { it.name },
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = HomeMutedColor,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
@@ -409,7 +502,9 @@ private fun AlbumHighlightsRow(
                     .size(width = 150.dp, height = 200.dp)
                     .clickable { onAlbumClick(highlight.albumHash) },
                 shape = MaterialTheme.shapes.medium,
-                tonalElevation = 2.dp
+                color = HomeCardColor,
+                border = BorderStroke(1.dp, HomeBorderColor),
+                tonalElevation = 0.dp
             ) {
                 Column(
                     modifier = Modifier.padding(12.dp),
@@ -430,13 +525,14 @@ private fun AlbumHighlightsRow(
                     Text(
                         text = highlight.title,
                         style = MaterialTheme.typography.bodyMedium,
+                        color = HomeAccentColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = highlight.artist,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = HomeMutedColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -460,7 +556,9 @@ private fun FolderRow(
                     .size(width = 160.dp, height = 120.dp)
                     .clickable { onFolderClick(folder) },
                 shape = MaterialTheme.shapes.medium,
-                tonalElevation = 1.dp
+                color = HomeCardColor,
+                border = BorderStroke(1.dp, HomeBorderColor),
+                tonalElevation = 0.dp
             ) {
                 Column(
                     modifier = Modifier
@@ -472,13 +570,14 @@ private fun FolderRow(
                         text = folder.name.ifBlank { "Unknown" },
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
+                        color = HomeAccentColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = "${folder.trackCount} tracks",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = HomeMutedColor
                     )
                 }
             }
@@ -497,7 +596,9 @@ private fun ArtistSpotlightRow(
         items(artists, key = { it.artistHash }) { artist ->
             Surface(
                 shape = MaterialTheme.shapes.small,
-                tonalElevation = 1.dp,
+                color = HomeCardAltColor,
+                border = BorderStroke(1.dp, HomeBorderColor),
+                tonalElevation = 0.dp,
                 modifier = Modifier
                     .clickable { onClick(artist.artistHash) }
                     .padding(vertical = 2.dp)
@@ -510,11 +611,12 @@ private fun ArtistSpotlightRow(
                     Icon(
                         painter = painterResource(id = UiComponent.drawable.ic_artist),
                         contentDescription = artist.name,
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = HomeAccentColor
                     )
                     Text(
                         text = artist.name,
                         style = MaterialTheme.typography.bodyMedium,
+                        color = HomeAccentColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -538,17 +640,23 @@ private fun SectionHeader(
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold
+            fontWeight = FontWeight.SemiBold,
+            color = HomeAccentColor
         )
 
         if (actionLabel != null && onActionClick != null) {
             TextButton(
                 onClick = onActionClick,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.primary
+                    contentColor = HomeAccentColor
                 )
             ) {
-                Text(text = actionLabel)
+                Text(
+                    text = actionLabel.uppercase(),
+                    color = HomeMutedColor,
+                    letterSpacing = 1.sp,
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
         }
     }
@@ -571,6 +679,17 @@ private data class LibraryAction(
     val label: String,
     val onClick: () -> Unit
 )
+
+private data class HomeStat(
+    val label: String,
+    val value: String
+)
+
+private val HomeCardColor = Color(0xFF151515)
+private val HomeCardAltColor = Color(0xFF1F1F1F)
+private val HomeBorderColor = Color(0x33FFFFFF)
+private val HomeAccentColor = Color(0xFFF5F5F5)
+private val HomeMutedColor = Color(0xFF9C9C9C)
 
 private fun playFromHome(
     track: Track,
