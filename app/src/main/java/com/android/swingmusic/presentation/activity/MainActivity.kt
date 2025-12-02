@@ -31,6 +31,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaController
@@ -163,7 +164,9 @@ class MainActivity : ComponentActivity() {
                     contentWindowInsets = WindowInsets(0),
                     bottomBar = {
                         if (shouldShowBottomBar) {
-                            NavigationBar {
+                            NavigationBar(
+                                containerColor = Color.Black
+                            ) {
                                 navItems.forEach { item ->
                                     val isSelected = navRoutePrefixes[item]?.any { prefix ->
                                         route?.startsWith(prefix) == true
