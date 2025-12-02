@@ -110,7 +110,7 @@ dependencies {
 
     // Navigation
     // implementation("io.github.raamcosta.compose-destinations:core:1.9.63")
-    implementation("io.github.raamcosta.compose-destinations:animations-core:1.11.9")
+    implementation("io.github.raamcosta.compose-destinations:core:2.3.0")
     ksp("io.github.raamcosta.compose-destinations:ksp:2.3.0")
 
     // Media3-Player

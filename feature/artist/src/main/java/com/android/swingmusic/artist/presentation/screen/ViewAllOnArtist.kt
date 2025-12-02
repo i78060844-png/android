@@ -50,6 +50,7 @@ import com.android.swingmusic.uicomponent.presentation.component.CustomTrackBott
 import com.android.swingmusic.uicomponent.presentation.component.TrackItem
 import com.android.swingmusic.uicomponent.presentation.theme.SwingMusicTheme
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -226,7 +227,7 @@ private fun ViewAllOnArtist(
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Destination
+@Destination<RootGraph>
 @Composable
 fun ViewAllScreenOnArtist(
     commonNavigator: CommonNavigator,

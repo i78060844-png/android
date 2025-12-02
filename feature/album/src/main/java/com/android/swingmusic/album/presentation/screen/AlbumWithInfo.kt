@@ -104,6 +104,7 @@ import com.android.swingmusic.uicomponent.presentation.util.BlurTransformation
 import com.android.swingmusic.uicomponent.presentation.util.formatDate
 import com.android.swingmusic.uicomponent.presentation.util.formattedAlbumDuration
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -635,7 +636,7 @@ fun AlbumWithInfo(
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
-@Destination
+@Destination<RootGraph>
 @Composable
 fun AlbumWithInfoScreen(
     albumWithInfoViewModel: AlbumWithInfoViewModel = hiltViewModel(),

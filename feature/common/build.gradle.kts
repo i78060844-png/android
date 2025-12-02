@@ -44,8 +44,8 @@ dependencies {
     implementation("androidx.compose.material3:material3")
 
     // Raamcosta Navigation
-    implementation("io.github.raamcosta.compose-destinations:core:1.9.63")
-    ksp("io.github.raamcosta.compose-destinations:ksp:1.9.63")
+    implementation("io.github.raamcosta.compose-destinations:core:2.3.0")
+    ksp("io.github.raamcosta.compose-destinations:ksp:2.3.0")
 }
 
 kotlin {

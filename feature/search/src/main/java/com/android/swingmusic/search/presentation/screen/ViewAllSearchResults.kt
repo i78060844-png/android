@@ -65,10 +65,11 @@ import com.android.swingmusic.uicomponent.presentation.component.ArtistItem
 import com.android.swingmusic.uicomponent.presentation.component.CustomTrackBottomSheet
 import com.android.swingmusic.uicomponent.presentation.component.TrackItem
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Destination
+@Destination<RootGraph>
 @Composable
 fun ViewAllSearchResults(
     searchParams: String,

@@ -68,6 +68,7 @@ import com.android.swingmusic.common.presentation.navigator.CommonNavigator
 import com.android.swingmusic.uicomponent.R
 import com.android.swingmusic.uicomponent.presentation.theme.SwingMusicTheme_Preview
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 
 @Composable
 private fun LoginWithUsername(
@@ -341,7 +342,7 @@ private fun LoginWithUsername(
     }
 }
 
-@Destination
+@Destination<RootGraph>
 @Composable
 fun LoginWithUsernameScreen(
     authViewModel: AuthViewModel,

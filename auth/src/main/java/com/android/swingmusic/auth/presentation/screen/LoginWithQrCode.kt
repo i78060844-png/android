@@ -58,10 +58,11 @@ import com.android.swingmusic.auth.presentation.viewmodel.AuthViewModel
 import com.android.swingmusic.common.presentation.navigator.CommonNavigator
 import com.android.swingmusic.uicomponent.R
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import kotlinx.coroutines.launch
 import qrscanner.QrScanner
 
-@Destination
+@Destination<RootGraph>
 @Composable
 fun LoginWithQrCode(
     authViewModel: AuthViewModel,

@@ -75,6 +75,7 @@ import com.android.swingmusic.uicomponent.presentation.component.FolderItem
 import com.android.swingmusic.uicomponent.presentation.component.PathIndicatorItem
 import com.android.swingmusic.uicomponent.presentation.component.TrackItem
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -482,7 +483,7 @@ private fun FoldersAndTracksPaginated(
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Destination
+@Destination<RootGraph>
 @Composable
 fun FoldersAndTracksPaginatedScreen(
     foldersViewModel: FoldersViewModel,

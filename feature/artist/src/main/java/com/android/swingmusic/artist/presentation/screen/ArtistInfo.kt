@@ -91,6 +91,7 @@ import com.android.swingmusic.uicomponent.presentation.theme.SwingMusicTheme_Pre
 import com.android.swingmusic.uicomponent.presentation.util.Screen
 import com.android.swingmusic.uicomponent.presentation.util.formattedAlbumDuration
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -836,7 +837,7 @@ private fun ArtistInfo(
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
-@Destination
+@Destination<RootGraph>
 @Composable
 fun ArtistInfoScreen(
     mediaControllerViewModel: MediaControllerViewModel,

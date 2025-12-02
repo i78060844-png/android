@@ -1,10 +1,6 @@
 package com.android.swingmusic.player.presentation.screen
 
 import android.content.res.Configuration
-import androidx.compose.animation.core.EaseOutQuad
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -32,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -74,13 +71,11 @@ import com.android.swingmusic.player.presentation.event.QueueEvent
 import com.android.swingmusic.player.presentation.util.calculateCurrentOffsetForPage
 import com.android.swingmusic.player.presentation.viewmodel.MediaControllerViewModel
 import com.android.swingmusic.uicomponent.R
-import com.android.swingmusic.uicomponent.presentation.component.slider.WaveAnimationSpecs
-import com.android.swingmusic.uicomponent.presentation.component.slider.WaveDirection
-import com.android.swingmusic.uicomponent.presentation.component.slider.WavySlider
 import com.android.swingmusic.uicomponent.presentation.theme.SwingMusicTheme_Preview
 import com.android.swingmusic.uicomponent.presentation.util.BlurTransformation
 import com.android.swingmusic.uicomponent.presentation.util.formatDuration
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import java.util.Locale
 
 @Composable
@@ -365,32 +360,12 @@ private fun NowPlaying(
                 Column(
                     modifier = Modifier.padding(horizontal = 24.dp)
                 ) {
-                    WavySlider(
+                    Slider(
                         modifier = Modifier.height(12.dp),
                         value = seekPosition,
                         onValueChange = { value ->
                             onSeekPlayBack(value)
-                        },
-                        waveLength = 32.dp,
-                        waveHeight = 8.dp,
-                        waveVelocity = (if (animateWave) 16.dp else 0.dp) to WaveDirection.HEAD,
-                        waveThickness = 4.dp,
-                        trackThickness = 4.dp,
-                        incremental = false,
-                        animationSpecs = WaveAnimationSpecs(
-                            waveHeightAnimationSpec = tween(
-                                durationMillis = 300,
-                                easing = FastOutSlowInEasing
-                            ),
-                            waveVelocityAnimationSpec = tween(
-                                durationMillis = 2000,
-                                easing = LinearOutSlowInEasing
-                            ),
-                            waveStartSpreadAnimationSpec = tween(
-                                durationMillis = 0,
-                                easing = EaseOutQuad
-                            )
-                        )
+                        }
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -618,7 +593,7 @@ private fun NowPlaying(
  * Expose a public Composable tied to MediaControllerViewModel
  * **/
 
-@Destination
+@Destination<RootGraph>
 @Composable
 fun NowPlayingScreen(
     mediaControllerViewModel: MediaControllerViewModel,

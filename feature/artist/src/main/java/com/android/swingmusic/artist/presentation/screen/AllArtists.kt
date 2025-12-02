@@ -66,6 +66,7 @@ import com.android.swingmusic.uicomponent.presentation.component.ArtistItem
 import com.android.swingmusic.uicomponent.presentation.component.SortByChip
 import com.android.swingmusic.uicomponent.presentation.theme.SwingMusicTheme
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import com.android.swingmusic.uicomponent.R as UiComponents
 
 @Composable
@@ -310,7 +311,7 @@ private fun AllArtists(
  * This Composable is heavily coupled with ArtistsViewModel. [AllArtists] Compsable has no ties.
  **/
 @OptIn(ExperimentalMaterial3Api::class)
-@Destination
+@Destination<RootGraph>
 @Composable
 fun AllArtistsScreen(
     navigator: CommonNavigator,

@@ -54,9 +54,10 @@ import com.android.swingmusic.player.presentation.event.QueueEvent
 import com.android.swingmusic.player.presentation.viewmodel.MediaControllerViewModel
 import com.android.swingmusic.uicomponent.R as UiComponent
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import java.util.Calendar
 
-@Destination
+@Destination<RootGraph>
 @Composable
 fun Home(
     navigator: CommonNavigator,

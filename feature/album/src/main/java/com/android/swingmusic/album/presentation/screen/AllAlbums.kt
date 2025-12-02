@@ -67,6 +67,7 @@ import com.android.swingmusic.uicomponent.presentation.component.AlbumItem
 import com.android.swingmusic.uicomponent.presentation.component.SortByChip
 import com.android.swingmusic.uicomponent.presentation.theme.SwingMusicTheme
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import com.android.swingmusic.uicomponent.R as UiComponents
 
 @Composable
@@ -309,7 +310,7 @@ private fun AllAlbums(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Destination
+@Destination<RootGraph>
 @Composable
 fun AllAlbumScreen(
     allAlbumsViewModel: AllAlbumsViewModel = hiltViewModel(),

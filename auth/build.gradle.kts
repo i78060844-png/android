@@ -86,8 +86,8 @@ dependencies {
     implementation("com.jakewharton.timber:timber:5.0.1")
 
     // Navigation
-    implementation("io.github.raamcosta.compose-destinations:core:1.9.63")
-    ksp("io.github.raamcosta.compose-destinations:ksp:1.9.63")
+    implementation("io.github.raamcosta.compose-destinations:core:2.3.0")
+    ksp("io.github.raamcosta.compose-destinations:ksp:2.3.0")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")

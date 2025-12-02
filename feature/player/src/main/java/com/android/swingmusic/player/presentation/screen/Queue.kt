@@ -75,6 +75,7 @@ import com.android.swingmusic.uicomponent.presentation.util.BlurTransformation
 import com.android.swingmusic.uicomponent.presentation.util.getName
 import com.android.swingmusic.uicomponent.presentation.util.getSourceType
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -463,7 +464,7 @@ private fun QueueSectionTitle(text: String) {
  * A Composable that ties [Queue] to [MediaControllerViewModel] where its sates are hoisted
  * */
 
-@Destination
+@Destination<RootGraph>
 @Composable
 fun QueueScreen(
     mediaControllerViewModel: MediaControllerViewModel,

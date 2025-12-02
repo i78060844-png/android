@@ -72,6 +72,7 @@ import com.android.swingmusic.uicomponent.presentation.component.PathIndicatorIt
 import com.android.swingmusic.uicomponent.presentation.component.TrackItem
 import com.android.swingmusic.uicomponent.presentation.theme.SwingMusicTheme
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootGraph
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -433,7 +434,7 @@ private fun FoldersAndTracks(
  *  and provides hoisted states
  */
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@Destination
+@Destination<RootGraph>
 @Composable
 fun FoldersAndTracksScreen(
     foldersViewModel: FoldersViewModel,

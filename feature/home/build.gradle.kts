@@ -64,8 +64,8 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
 
     // Navigation
-    implementation("io.github.raamcosta.compose-destinations:core:1.9.63")
-    ksp("io.github.raamcosta.compose-destinations:ksp:1.9.63")
+    implementation("io.github.raamcosta.compose-destinations:core:2.3.0")
+    ksp("io.github.raamcosta.compose-destinations:ksp:2.3.0")
 
     // Retrofit
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
