@@ -48,6 +48,15 @@ class EndlessSoundRepositoryImpl @Inject constructor(
     
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
     
+    companion object {
+        // Replay validation criteria
+        private const val VALID_REPLAY_MAX_START_SEC = 6
+        private const val VALID_REPLAY_MIN_DURATION_SEC = 15
+        
+        // Cleanup thresholds
+        private const val HIGH_TIER_PROTECTION_THRESHOLD = 0.5f // Protect high-tier tracks unless freeing >50% space
+    }
+    
     override suspend fun getTrackUri(
         trackHash: String,
         originalPath: String,
@@ -190,7 +199,8 @@ class EndlessSoundRepositoryImpl @Inject constructor(
         startPositionSec: Int,
         listenedDurationSec: Int
     ) = withContext(Dispatchers.IO) {
-        val isValidReplay = startPositionSec <= 6 && listenedDurationSec >= 15
+        val isValidReplay = startPositionSec <= VALID_REPLAY_MAX_START_SEC && 
+                           listenedDurationSec >= VALID_REPLAY_MIN_DURATION_SEC
         
         Timber.tag("EndlessSound").d(
             "Replay session: $trackHash (start=${startPositionSec}s, listened=${listenedDurationSec}s, valid=$isValidReplay)"
@@ -304,7 +314,7 @@ class EndlessSoundRepositoryImpl @Inject constructor(
                 if (sizeToFree <= 0) break
                 
                 // Don't evict high-tier tracks unless necessary
-                if (track.tierOrdinal >= CacheTier.FAVORITE.ordinal && sizeToFree < currentSize * 0.5) {
+                if (track.tierOrdinal >= CacheTier.FAVORITE.ordinal && sizeToFree < currentSize * HIGH_TIER_PROTECTION_THRESHOLD) {
                     Timber.tag("EndlessSound").v("Skipping high-tier track: ${track.trackHash} (tier=${track.tierOrdinal})")
                     continue
                 }

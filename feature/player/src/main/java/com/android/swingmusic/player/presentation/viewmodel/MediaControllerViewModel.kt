@@ -91,6 +91,11 @@ class MediaControllerViewModel @Inject constructor(
         )
     )
     val playerUiState: StateFlow<PlayerUiState> get() = _playerUiState
+    
+    companion object {
+        // EndlessSound replay session criteria - must match repository values
+        private const val REPLAY_START_THRESHOLD_MS = 6000L // 6 seconds
+    }
 
     init {
         refreshBaseUrl()
@@ -838,7 +843,7 @@ class MediaControllerViewModel @Inject constructor(
                     val seekPosition = positionInMs.coerceIn(0, trackDurationMs.toLong())
 
                     // Update start position when seeking - consider this a new playback session
-                    if (seekPosition <= 6000L) {
+                    if (seekPosition <= REPLAY_START_THRESHOLD_MS) {
                         // Seeking to beginning, update start position
                         trackStartPositionMs = seekPosition
                     }
