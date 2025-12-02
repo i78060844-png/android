@@ -37,11 +37,21 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+          gradle-home-cache-cleanup: true
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Setup signing keystore
         run: |
+          # IMPORTANT: The KEYSTORE_FILE secret contains the base64-encoded keystore
+          # This keystore MUST remain the same across all releases to maintain signature consistency
+          # Never regenerate or replace the keystore unless absolutely necessary
+          # as it will invalidate all previous releases and users will need to uninstall the app
           echo "${{ secrets.KEYSTORE_FILE }}" | base64 -d > app/release-key.keystore
         env:
           KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
@@ -73,7 +83,7 @@ jobs:
           fi
 
       - name: Build signed APK
-        run: ./gradlew assembleRelease -PversionCode=${{ github.run_number }} -PversionName="${{ steps.version.outputs.version_number }}"
+        run: ./gradlew assembleRelease -PversionCode=${{ github.run_number }} -PversionName="${{ steps.version.outputs.version_number }}" --build-cache --parallel --configuration-cache
         env:
           KEYSTORE_FILE: release-key.keystore
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
