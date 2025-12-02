@@ -80,6 +80,9 @@ class MediaControllerViewModel @Inject constructor(
     
     // MusicForYou tracking
     private var trackStartTimeMs: Long = 0L
+    
+    // EndlessSound replay tracking
+    private var trackStartPositionMs: Long = 0L
 
     private val _playerUiState: MutableStateFlow<PlayerUiState> = MutableStateFlow(
         PlayerUiState(
@@ -88,6 +91,11 @@ class MediaControllerViewModel @Inject constructor(
         )
     )
     val playerUiState: StateFlow<PlayerUiState> get() = _playerUiState
+    
+    companion object {
+        // EndlessSound replay session criteria - must match repository values
+        private const val REPLAY_START_THRESHOLD_MS = 6000L // 6 seconds
+    }
 
     init {
         refreshBaseUrl()
@@ -329,11 +337,17 @@ class MediaControllerViewModel @Inject constructor(
         val baseUrl = _baseUrl.value ?: ""
         
         // Try to get from EndlessSound cache first
-        val uri = endlessSoundRepository.getTrackUri(
-            trackHash = track.trackHash,
-            originalPath = track.filepath,
-            baseUrl = baseUrl
-        ).toUri()
+        val uri = try {
+            endlessSoundRepository.getTrackUri(
+                trackHash = track.trackHash,
+                originalPath = track.filepath,
+                baseUrl = baseUrl
+            ).toUri()
+        } catch (e: Exception) {
+            Timber.tag("EndlessSound").e("Error getting track URI for ${track.title}: ${e.message}")
+            // Fallback to direct streaming URL
+            buildTrackUrl(baseUrl, track.trackHash, track.filepath).toUri()
+        }
 
         val artworkUri = "${baseUrl}img/thumbnail/${track.image}".toUri()
         val artists = track.trackArtists.joinToString(", ") { it.name }
@@ -352,20 +366,38 @@ class MediaControllerViewModel @Inject constructor(
             .build()
     }
     
+    private fun buildTrackUrl(baseUrl: String, trackHash: String, filePath: String): String {
+        val encodedPath = Uri.encode(filePath)
+        return "${baseUrl}file/${trackHash}/legacy?filepath=$encodedPath"
+    }
+    
     /**
      * Start caching track in background when playback begins
      */
     private fun startCachingTrack(track: Track) {
         viewModelScope.launch {
             try {
-                val baseUrl = _baseUrl.value ?: return@launch
+                val baseUrl = _baseUrl.value
+                if (baseUrl.isNullOrEmpty()) {
+                    Timber.tag("EndlessSound").w("Cannot cache: baseUrl not available")
+                    return@launch
+                }
+                
+                // Check if already cached before starting
+                val alreadyCached = endlessSoundRepository.isCached(track.trackHash)
+                if (alreadyCached) {
+                    Timber.tag("EndlessSound").v("Track already cached, skipping: ${track.title}")
+                    return@launch
+                }
+                
+                Timber.tag("EndlessSound").d("Requesting cache for current track: ${track.title}")
                 endlessSoundRepository.startCaching(
                     trackHash = track.trackHash,
                     originalPath = track.filepath,
                     baseUrl = baseUrl
                 )
             } catch (e: Exception) {
-                Timber.tag("EndlessSound").e("Caching failed: ${e.message}")
+                Timber.tag("EndlessSound").e("Caching failed for ${track.title}: ${e.message}")
             }
         }
     }
@@ -376,23 +408,44 @@ class MediaControllerViewModel @Inject constructor(
     private fun cacheNextTrack(currentIndex: Int) {
         viewModelScope.launch {
             try {
-                val baseUrl = _baseUrl.value ?: return@launch
+                val baseUrl = _baseUrl.value
+                if (baseUrl.isNullOrEmpty()) {
+                    Timber.tag("EndlessSound").v("Cannot pre-cache: baseUrl not available")
+                    return@launch
+                }
+                
                 val currentQueue = if (_playerUiState.value.shuffleMode == ShuffleMode.SHUFFLE_ON) {
                     shuffledQueue
                 } else {
                     workingQueue
                 }
                 
-                // Cache next 2 tracks
+                // Pre-cache next 2 tracks in background
+                val tracksToCache = mutableListOf<Track>()
                 listOf(currentIndex + 1, currentIndex + 2).forEach { nextIndex ->
                     if (nextIndex in currentQueue.indices) {
                         val nextTrack = currentQueue[nextIndex]
-                        endlessSoundRepository.startCaching(
-                            trackHash = nextTrack.trackHash,
-                            originalPath = nextTrack.filepath,
-                            baseUrl = baseUrl
-                        )
+                        // Check if already cached to avoid duplicate downloads
+                        if (!endlessSoundRepository.isCached(nextTrack.trackHash)) {
+                            tracksToCache.add(nextTrack)
+                        }
                     }
+                }
+                
+                if (tracksToCache.isEmpty()) {
+                    Timber.tag("EndlessSound").v("No tracks to pre-cache (all already cached)")
+                    return@launch
+                }
+                
+                Timber.tag("EndlessSound").d("Pre-caching ${tracksToCache.size} upcoming tracks")
+                
+                // Start caching in background (repository handles duplicate prevention)
+                tracksToCache.forEach { nextTrack ->
+                    endlessSoundRepository.startCaching(
+                        trackHash = nextTrack.trackHash,
+                        originalPath = nextTrack.filepath,
+                        baseUrl = baseUrl
+                    )
                 }
             } catch (e: Exception) {
                 Timber.tag("EndlessSound").e("Pre-caching failed: ${e.message}")
@@ -406,13 +459,16 @@ class MediaControllerViewModel @Inject constructor(
     private fun recordReplaySession(track: Track, startPositionSec: Int, listenedDurationSec: Int) {
         viewModelScope.launch {
             try {
+                Timber.tag("EndlessSound").d(
+                    "Recording replay: ${track.title} (start=${startPositionSec}s, listened=${listenedDurationSec}s)"
+                )
                 endlessSoundRepository.recordReplaySession(
                     trackHash = track.trackHash,
                     startPositionSec = startPositionSec,
                     listenedDurationSec = listenedDurationSec
                 )
             } catch (e: Exception) {
-                Timber.tag("EndlessSound").e("Replay session recording failed: ${e.message}")
+                Timber.tag("EndlessSound").e("Replay session recording failed for ${track.title}: ${e.message}")
             }
         }
     }
@@ -786,6 +842,12 @@ class MediaControllerViewModel @Inject constructor(
                     val positionInMs = (trackDurationMs * toValue).toLong()
                     val seekPosition = positionInMs.coerceIn(0, trackDurationMs.toLong())
 
+                    // Update start position when seeking - consider this a new playback session
+                    if (seekPosition <= REPLAY_START_THRESHOLD_MS) {
+                        // Seeking to beginning, update start position
+                        trackStartPositionMs = seekPosition
+                    }
+
                     if (controller.playbackState == Player.STATE_READY) {
                         controller.seekTo(seekPosition)
                         controller.play()
@@ -1125,6 +1187,14 @@ class MediaControllerViewModel @Inject constructor(
                             source = _playerUiState.value.source,
                             indexInQueue = _playerUiState.value.playingTrackIndex
                         )
+                        
+                        // EndlessSound: Record replay session when track ends
+                        val startPosSec = (trackStartPositionMs / 1000).toInt()
+                        recordReplaySession(
+                            track = trackToLog!!,
+                            startPositionSec = startPosSec,
+                            listenedDurationSec = durationPlayedSec.toInt()
+                        )
                     }
 
                     // Prepare for the next log data
@@ -1185,11 +1255,22 @@ class MediaControllerViewModel @Inject constructor(
                                 lastPlayPositionMs = durationPlayedSec * 1000L
                             )
                         }
+                        
+                        // EndlessSound: Record replay session for previous track
+                        val startPosSec = (trackStartPositionMs / 1000).toInt()
+                        recordReplaySession(
+                            track = trackToLog!!,
+                            startPositionSec = startPosSec,
+                            listenedDurationSec = durationPlayedSec.toInt()
+                        )
                     }
 
                     // Prepare for the next Transition log data
                     durationPlayedSec = 0L
                     trackToLog = playingTrack
+                    
+                    // Track where this track starts from
+                    trackStartPositionMs = mediaController?.currentPosition ?: 0L
                     
                     // MusicForYou: Track new track start
                     trackPlayStarted(playingTrack)
@@ -1199,15 +1280,6 @@ class MediaControllerViewModel @Inject constructor(
                     
                     // EndlessSound: Pre-cache next tracks in background
                     cacheNextTrack(trackIndex)
-                    
-                    // Record replay session for previous track (for TTL upgrade)
-                    trackToLog?.let { prevTrack ->
-                        recordReplaySession(
-                            track = prevTrack,
-                            startPositionSec = 0, // We don't track exact start position yet
-                            listenedDurationSec = durationPlayedSec.toInt()
-                        )
-                    }
                 } catch (e: Exception) {
                     Timber.e("ERROR ON TRANSITION -> $e")
                 }
