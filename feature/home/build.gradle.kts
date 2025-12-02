@@ -46,6 +46,7 @@ dependencies {
     implementation(project(":network"))
     implementation(project(":uicomponent"))
     implementation(project(":feature:player"))
+    implementation(project(":feature:folder"))
     // Common
     implementation(project(":feature:common"))
 
@@ -60,6 +61,9 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // Coil
+    implementation("io.coil-kt:coil-compose:2.6.0")
 
     // Navigation
     implementation("io.github.raamcosta.compose-destinations:core:1.9.63")

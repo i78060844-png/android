@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -174,36 +175,27 @@ private fun Search(
             }
         }
     ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
             when {
                 isLoading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(paddingValues),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
+                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
 
                 isError -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(text = errorMessage ?: "An error has occurred!")
+                        Text(text = errorMessage ?: "An error has occurred!")
 
-                            Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
 
-                            Button(onClick = onRetrySearch) {
-                                Text(text = "Retry")
-                            }
+                        Button(onClick = onRetrySearch) {
+                            Text(text = "Retry")
                         }
                     }
                 }
@@ -215,35 +207,26 @@ private fun Search(
                         artistsSearchResults.isEmpty() &&
                         searchParams.isNotEmpty()
                         ) -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(paddingValues),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.no_match_found),
-                                contentDescription = null
-                            )
+                        Image(
+                            painter = painterResource(id = R.drawable.no_match_found),
+                            contentDescription = null
+                        )
 
-                            Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(24.dp))
 
-                            Text(text = "No match found!")
-                        }
+                        Text(text = "No match found!")
                     }
                 }
 
                 else -> {
                     LazyColumn(
                         state = lazyColumnState,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues)
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(bottom = 96.dp)
                     ) {
                         topResultItem?.let { result ->
                             item {
@@ -501,10 +484,6 @@ private fun Search(
                                     }
                                 }
                             }
-                        }
-
-                        item {
-                            Spacer(modifier = Modifier.height(250.dp))
                         }
                     }
                 }

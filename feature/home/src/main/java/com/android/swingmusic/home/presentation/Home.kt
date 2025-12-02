@@ -1,5 +1,6 @@
 package com.android.swingmusic.home.presentation
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,13 +16,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.BorderStroke
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.android.swingmusic.common.presentation.navigator.CommonNavigator
 import com.android.swingmusic.core.domain.model.Folder
 import com.android.swingmusic.core.domain.model.Track
 import com.android.swingmusic.core.domain.model.TrackArtist
@@ -44,7 +45,6 @@ import com.android.swingmusic.core.domain.util.QueueSource
 import com.android.swingmusic.folder.presentation.viewmodel.FoldersViewModel
 import com.android.swingmusic.player.presentation.event.QueueEvent
 import com.android.swingmusic.player.presentation.viewmodel.MediaControllerViewModel
-import com.android.swingmusic.presentation.navigator.CoreNavigator
 import com.android.swingmusic.uicomponent.R as UiComponent
 import com.ramcosta.composedestinations.annotation.Destination
 import java.util.Calendar
@@ -53,7 +53,7 @@ import java.util.Calendar
 @Destination
 @Composable
 fun Home(
-    navigator: CoreNavigator,
+    navigator: CommonNavigator,
     mediaControllerViewModel: MediaControllerViewModel,
     foldersViewModel: FoldersViewModel
 ) {
@@ -84,7 +84,7 @@ fun Home(
             .map {
                 AlbumHighlight(
                     albumHash = it.albumHash,
-                    title = it.albumTitle,
+                    title = it.album,
                     artist = it.trackArtists.firstOrNull()?.name ?: "Unknown artist",
                     image = it.image
                 )
@@ -107,7 +107,7 @@ fun Home(
     val greeting = remember { resolveGreeting() }
     val currentTrackTitle = playerUiState.nowPlayingTrack?.title
 
-    val quickActions = remember {
+    val quickActions = remember(navigator) {
         listOf(
             QuickAction(UiComponent.drawable.folder_filled, "Library") { navigator.gotoFolders() },
             QuickAction(UiComponent.drawable.ic_album, "Albums") { navigator.gotoAlbumLibrary() },
@@ -256,6 +256,7 @@ private fun SearchCard(onClick: () -> Unit) {
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun QuickActionGrid(actions: List<QuickAction>) {
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -493,7 +494,7 @@ private fun SectionHeader(
         if (actionLabel != null && onActionClick != null) {
             TextButton(
                 onClick = onActionClick,
-                colors = TextButtonDefaults.textButtonColors(
+                colors = ButtonDefaults.textButtonColors(
                     contentColor = MaterialTheme.colorScheme.primary
                 )
             ) {

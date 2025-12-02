@@ -3,6 +3,7 @@ package com.android.swingmusic.search.presentation.screen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -197,195 +198,164 @@ fun ViewAllSearchResults(
                 }
             }
         }
-    ) { pdValues ->
-            if (showTrackBottomSheet) {
-                clickedTrack?.let { track ->
-                    CustomTrackBottomSheet(
-                        scope = scope,
-                        sheetState = sheetState,
-                        isFavorite = track.isFavorite,
-                        clickedTrack = track,
-                        baseUrl = baseUrl ?: "",
-                        currentArtisthash = null,
-                        bottomSheetItems = listOf(
-                            BottomSheetItemModel(
-                                label = "Go to Artist",
-                                painterId = R.drawable.ic_artist,
-                                track = track,
-                                sheetAction = BottomSheetAction.OpenArtistsDialog(track.trackArtists)
-                            ),
-                            BottomSheetItemModel(
-                                label = "Go to Album",
-                                painterId = R.drawable.ic_album,
-                                track = track,
-                                sheetAction = BottomSheetAction.GotoAlbum
-                            ),
-                            BottomSheetItemModel(
-                                label = "Go to Folder",
-                                painterId = R.drawable.folder_outlined_open,
-                                track = track,
-                                sheetAction = BottomSheetAction.GotoFolder(
-                                    name = track.folder.getFolderName(),
-                                    path = track.folder
-                                )
-                            ),
-                            BottomSheetItemModel(
-                                label = "Play Next",
-                                painterId = R.drawable.play_next,
-                                track = track,
-                                sheetAction = BottomSheetAction.PlayNext
-                            ),
-                            BottomSheetItemModel(
-                                label = "Add to playing queue",
-                                painterId = R.drawable.add_to_queue,
-                                track = track,
-                                sheetAction = BottomSheetAction.AddToQueue
+    ) { paddingValues ->
+        if (showTrackBottomSheet) {
+            clickedTrack?.let { track ->
+                CustomTrackBottomSheet(
+                    scope = scope,
+                    sheetState = sheetState,
+                    isFavorite = track.isFavorite,
+                    clickedTrack = track,
+                    baseUrl = baseUrl ?: "",
+                    currentArtisthash = null,
+                    bottomSheetItems = listOf(
+                        BottomSheetItemModel(
+                            label = "Go to Artist",
+                            painterId = R.drawable.ic_artist,
+                            track = track,
+                            sheetAction = BottomSheetAction.OpenArtistsDialog(track.trackArtists)
+                        ),
+                        BottomSheetItemModel(
+                            label = "Go to Album",
+                            painterId = R.drawable.ic_album,
+                            track = track,
+                            sheetAction = BottomSheetAction.GotoAlbum
+                        ),
+                        BottomSheetItemModel(
+                            label = "Go to Folder",
+                            painterId = R.drawable.folder_outlined_open,
+                            track = track,
+                            sheetAction = BottomSheetAction.GotoFolder(
+                                name = track.folder.getFolderName(),
+                                path = track.folder
                             )
                         ),
-                        onHideBottomSheet = {
-                            showTrackBottomSheet = it
-                        },
-                        onClickSheetItem = { sheetTrack, sheetAction ->
-                            when (sheetAction) {
-                                is BottomSheetAction.GotoAlbum -> {
-                                    navigator.gotoAlbumWithInfo(sheetTrack.albumHash)
-                                }
-
-                                is BottomSheetAction.GotoFolder -> {
-                                    navigator.gotoSourceFolder(
-                                        sheetAction.name,
-                                        sheetAction.path
+                        BottomSheetItemModel(
+                            label = "Play Next",
+                            painterId = R.drawable.play_next,
+                            track = track,
+                            sheetAction = BottomSheetAction.PlayNext
+                        ),
+                        BottomSheetItemModel(
+                            label = "Add to playing queue",
+                            painterId = R.drawable.add_to_queue,
+                            track = track,
+                            sheetAction = BottomSheetAction.AddToQueue
+                        )
+                    ),
+                    onHideBottomSheet = {
+                        showTrackBottomSheet = it
+                    },
+                    onClickSheetItem = { sheetTrack, sheetAction ->
+                        when (sheetAction) {
+                            is BottomSheetAction.GotoAlbum -> navigator.gotoAlbumWithInfo(sheetTrack.albumHash)
+                            is BottomSheetAction.GotoFolder -> navigator.gotoSourceFolder(sheetAction.name, sheetAction.path)
+                            is BottomSheetAction.PlayNext -> {
+                                mediaControllerViewModel.onQueueEvent(
+                                    QueueEvent.PlayNext(
+                                        track = sheetTrack,
+                                        source = QueueSource.SEARCH
                                     )
-                                }
-
-                                is BottomSheetAction.PlayNext -> {
-                                    mediaControllerViewModel.onQueueEvent(
-                                        QueueEvent.PlayNext(
-                                            track = sheetTrack,
-                                            source = QueueSource.SEARCH
-                                        )
-                                    )
-
-                                    scope.launch {
-                                        val result = snackbarHostState.showSnackbar(
-                                            message = "Track added to play next",
-                                            actionLabel = "View Queue",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                        if (result == SnackbarResult.ActionPerformed) {
-                                            navigator.gotoQueueScreen()
-                                        }
-                                    }
-                                }
-
-                                is BottomSheetAction.AddToQueue -> {
-                                    mediaControllerViewModel.onQueueEvent(
-                                        QueueEvent.AddToQueue(
-                                            track = sheetTrack,
-                                            source = QueueSource.SEARCH
-                                        )
-                                    )
-
-                                    scope.launch {
-                                        val result = snackbarHostState.showSnackbar(
-                                            message = "Track added to playing queue",
-                                            actionLabel = "View Queue",
-                                            duration = SnackbarDuration.Short
-                                        )
-                                        if (result == SnackbarResult.ActionPerformed) {
-                                            navigator.gotoQueueScreen()
-                                        }
-                                    }
-                                }
-
-                                else -> {}
-                            }
-                        },
-                        onChooseArtist = { hash ->
-                            artistInfoViewModel.onArtistInfoUiEvent(
-                                ArtistInfoUiEvent.OnLoadArtistInfo(hash)
-                            )
-                            navigator.gotoArtistInfo(hash)
-                        },
-                        onToggleTrackFavorite = { trackHash, isFavorite ->
-                            searchViewModel.onSearchUiEvent(
-                                SearchUiEvent.OnToggleTrackFavorite(
-                                    trackHash = trackHash,
-                                    isFavorite = isFavorite
                                 )
-                            )
-                        }
-                    )
-                }
-            }
 
+                                scope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = "Track added to play next",
+                                        actionLabel = "View Queue",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) {
+                                        navigator.gotoQueueScreen()
+                                    }
+                                }
+                            }
+
+                            is BottomSheetAction.AddToQueue -> {
+                                mediaControllerViewModel.onQueueEvent(
+                                    QueueEvent.AddToQueue(
+                                        track = sheetTrack,
+                                        source = QueueSource.SEARCH
+                                    )
+                                )
+
+                                scope.launch {
+                                    val result = snackbarHostState.showSnackbar(
+                                        message = "Track added to playing queue",
+                                        actionLabel = "View Queue",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                    if (result == SnackbarResult.ActionPerformed) {
+                                        navigator.gotoQueueScreen()
+                                    }
+                                }
+                            }
+
+                            else -> {}
+                        }
+                    },
+                    onChooseArtist = { hash ->
+                        artistInfoViewModel.onArtistInfoUiEvent(
+                            ArtistInfoUiEvent.OnLoadArtistInfo(hash)
+                        )
+                        navigator.gotoArtistInfo(hash)
+                    },
+                    onToggleTrackFavorite = { trackHash, isFavorite ->
+                        searchViewModel.onSearchUiEvent(
+                            SearchUiEvent.OnToggleTrackFavorite(
+                                trackHash = trackHash,
+                                isFavorite = isFavorite
+                            )
+                        )
+                    }
+                )
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
             when {
                 isError -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(pdValues),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = errorMessage,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                        Text(
+                            text = errorMessage,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
 
-                            Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
-                            Button(
-                                onClick = {
-                                    when (viewAllType) {
-                                        "tracks" -> {
-                                            searchViewModel.onSearchUiEvent(
-                                                SearchUiEvent.OnSearchAllTacks(searchParams)
-                                            )
-                                        }
-
-                                        "albums" -> {
-                                            searchViewModel.onSearchUiEvent(
-                                                SearchUiEvent.OnSearchAllAlbums(searchParams)
-                                            )
-                                        }
-
-                                        "artists" -> {
-                                            searchViewModel.onSearchUiEvent(
-                                                SearchUiEvent.OnSearchAllArtists(searchParams)
-                                            )
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.padding(horizontal = 16.dp)
-                            ) {
-                                Text("Retry")
+                        Button(
+                            onClick = {
+                                when (viewAllType) {
+                                    "tracks" -> searchViewModel.onSearchUiEvent(SearchUiEvent.OnSearchAllTacks(searchParams))
+                                    "albums" -> searchViewModel.onSearchUiEvent(SearchUiEvent.OnSearchAllAlbums(searchParams))
+                                    "artists" -> searchViewModel.onSearchUiEvent(SearchUiEvent.OnSearchAllArtists(searchParams))
+                                }
                             }
+                        ) {
+                            Text("Retry")
                         }
                     }
                 }
 
                 isLoading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(pdValues),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            CircularProgressIndicator()
+                        CircularProgressIndicator()
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                            Text(
-                                text = "Loading, please wait...",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
+                        Text(
+                            text = "Loading, please wait...",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
 
@@ -394,9 +364,8 @@ fun ViewAllSearchResults(
                         "tracks" -> {
                             allTracks?.let { tracks ->
                                 LazyColumn(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(pdValues)
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(bottom = 96.dp)
                                 ) {
                                     itemsIndexed(
                                         items = tracks.data ?: emptyList(),
@@ -406,8 +375,7 @@ fun ViewAllSearchResults(
                                             track = track,
                                             showMenuIcon = true,
                                             isCurrentTrack = track.trackHash ==
-                                                    (playerUiState.nowPlayingTrack?.trackHash
-                                                        ?: ""),
+                                                    (playerUiState.nowPlayingTrack?.trackHash ?: ""),
                                             playbackState = playerUiState.playbackState,
                                             baseUrl = baseUrl ?: "",
                                             onClickTrackItem = {
@@ -424,7 +392,6 @@ fun ViewAllSearchResults(
                                                 showTrackBottomSheet = true
                                             }
                                         )
-
                                     }
                                 }
                             }
@@ -433,12 +400,15 @@ fun ViewAllSearchResults(
                         "albums" -> {
                             allAlbums?.let { albums ->
                                 LazyVerticalGrid(
-                                    modifier = Modifier
-                                        .padding(pdValues)
-                                        .fillMaxSize()
-                                        .padding(horizontal = 8.dp),
+                                    modifier = Modifier.fillMaxSize(),
                                     columns = GridCells.Fixed(2),
                                     state = gridState,
+                                    contentPadding = PaddingValues(
+                                        start = 8.dp,
+                                        end = 8.dp,
+                                        top = 0.dp,
+                                        bottom = 96.dp
+                                    )
                                 ) {
                                     items(
                                         items = albums.data ?: emptyList(),
@@ -453,7 +423,6 @@ fun ViewAllSearchResults(
                                             }
                                         )
                                     }
-
                                 }
                             }
                         }
@@ -461,12 +430,15 @@ fun ViewAllSearchResults(
                         "artists" -> {
                             allArtists?.let { artists ->
                                 LazyVerticalGrid(
-                                    modifier = Modifier
-                                        .padding(pdValues)
-                                        .fillMaxSize()
-                                        .padding(horizontal = 8.dp),
+                                    modifier = Modifier.fillMaxSize(),
                                     columns = GridCells.Fixed(2),
                                     state = gridState,
+                                    contentPadding = PaddingValues(
+                                        start = 8.dp,
+                                        end = 8.dp,
+                                        top = 0.dp,
+                                        bottom = 96.dp
+                                    )
                                 ) {
                                     items(
                                         items = artists.data ?: emptyList(),
@@ -481,7 +453,6 @@ fun ViewAllSearchResults(
                                             }
                                         )
                                     }
-
                                 }
                             }
                         }

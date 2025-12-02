@@ -52,6 +52,7 @@ import com.android.swingmusic.auth.data.workmanager.scheduleTokenRefreshWork
 import com.android.swingmusic.auth.presentation.screen.destinations.LoginWithQrCodeDestination
 import com.android.swingmusic.auth.presentation.screen.destinations.LoginWithUsernameScreenDestination
 import com.android.swingmusic.auth.presentation.viewmodel.AuthViewModel
+import com.android.swingmusic.common.presentation.navigator.CommonNavigator
 import com.android.swingmusic.folder.presentation.event.FolderUiEvent
 import com.android.swingmusic.folder.presentation.screen.destinations.FoldersAndTracksPaginatedScreenDestination
 import com.android.swingmusic.folder.presentation.viewmodel.FoldersViewModel
@@ -319,6 +320,9 @@ internal fun SwingMusicAppNavigation(
     searchViewModel: SearchViewModel
 ) {
     val navGraph = remember(isUserLoggedIn) { NavGraphs.root(isUserLoggedIn) }
+    val navigator: CommonNavigator = remember(navController) {
+        CoreNavigator(navController = navController)
+    }
 
     val animatedNavHostEngine = rememberAnimatedNavHostEngine(
         navHostContentAlignment = Alignment.TopCenter,
@@ -346,9 +350,7 @@ internal fun SwingMusicAppNavigation(
         navController = navController,
         navGraph = navGraph,
         dependenciesContainerBuilder = {
-            dependency(
-                CoreNavigator(navController = navController)
-            )
+            dependency(navigator)
             dependency(authViewModel)
             dependency(foldersViewModel)
             dependency(mediaControllerViewModel)

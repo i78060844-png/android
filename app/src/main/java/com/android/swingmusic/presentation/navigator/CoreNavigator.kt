@@ -2,7 +2,9 @@ package com.android.swingmusic.presentation.navigator
 
 import androidx.navigation.NavController
 import com.android.swingmusic.album.presentation.screen.destinations.AlbumWithInfoScreenDestination
+import com.android.swingmusic.album.presentation.screen.destinations.AllAlbumScreenDestination
 import com.android.swingmusic.artist.presentation.screen.destinations.ArtistInfoScreenDestination
+import com.android.swingmusic.artist.presentation.screen.destinations.AllArtistsScreenDestination
 import com.android.swingmusic.artist.presentation.screen.destinations.ViewAllScreenOnArtistDestination
 import com.android.swingmusic.auth.presentation.screen.destinations.LoginWithQrCodeDestination
 import com.android.swingmusic.auth.presentation.screen.destinations.LoginWithUsernameScreenDestination
