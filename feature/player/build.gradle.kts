@@ -105,6 +105,6 @@ kotlin {
 }
 
 ksp {
-    arg("compose-destinations.mode", "destinations")
+    arg("compose-destinations.generateNavGraphs", "false")
     arg("compose-destinations.moduleName", "feature:player")
 }
