@@ -1,6 +1,6 @@
 package com.android.swingmusic.home.presentation
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,11 +32,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -266,8 +268,7 @@ private fun SearchCard(onClick: () -> Unit) {
             .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.medium,
-        color = HomeCardColor,
-        border = BorderStroke(1.dp, HomeBorderColor),
+        color = HomeCardAltColor,
         tonalElevation = 0.dp
     ) {
         Row(
@@ -327,7 +328,6 @@ private fun HomeStatCard(
         modifier = modifier.height(96.dp),
         shape = RoundedCornerShape(20.dp),
         color = if (highlight) HomeCardAltColor else HomeCardColor,
-        border = BorderStroke(1.dp, if (highlight) Color.White.copy(alpha = 0.2f) else HomeBorderColor),
         tonalElevation = 0.dp
     ) {
         Column(
@@ -386,7 +386,6 @@ private fun LibraryActionCard(
             .clickable(onClick = action.onClick),
         shape = RoundedCornerShape(18.dp),
         color = HomeCardColor,
-        border = BorderStroke(1.dp, HomeBorderColor),
         tonalElevation = 0.dp
     ) {
         Row(
@@ -399,8 +398,7 @@ private fun LibraryActionCard(
             Surface(
                 modifier = Modifier.size(38.dp),
                 shape = RoundedCornerShape(12.dp),
-                color = HomeCardAltColor,
-                border = BorderStroke(1.dp, HomeBorderColor)
+                color = HomeCardAltColor
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
@@ -435,50 +433,59 @@ private fun ContinueListeningRow(
     ) {
         items(tracks, key = { it.trackHash }) { track ->
             val isActive = track.trackHash == nowPlayingHash
-            val border = if (isActive) {
-                BorderStroke(1.dp, Color.White.copy(alpha = 0.5f))
-            } else {
-                BorderStroke(1.dp, HomeBorderColor)
-            }
             Surface(
                 modifier = Modifier
                     .width(220.dp)
                     .clickable { onPlayTrack(track) },
-                shape = RoundedCornerShape(20.dp),
-                color = HomeCardAltColor,
+                shape = RoundedCornerShape(22.dp),
+                color = Color.Transparent,
                 tonalElevation = 0.dp,
-                border = border
+                shadowElevation = if (isActive) 16.dp else 6.dp
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                val cardShape = RoundedCornerShape(22.dp)
+                Box(
+                    modifier = Modifier
+                        .clip(cardShape)
+                        .background(HomeCardColor)
                 ) {
                     AsyncImage(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(120.dp)
-                            .clip(RoundedCornerShape(16.dp)),
+                        modifier = Modifier.fillMaxSize(),
                         model = ImageRequest.Builder(LocalContext.current)
                             .data("${baseUrl}img/thumbnail/${track.image}")
                             .crossfade(true)
                             .build(),
                         placeholder = painterResource(id = UiComponent.drawable.audio_fallback),
-                        contentDescription = track.title
+                        contentDescription = track.title,
+                        contentScale = ContentScale.Crop
                     )
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.BottomStart)
+                            .background(
+                                Brush.verticalGradient(
+                                    0f to Color.Transparent,
+                                    0.6f to Color.Black.copy(alpha = 0.4f),
+                                    1f to Color.Black.copy(alpha = 0.85f)
+                                )
+                            )
+                            .padding(horizontal = 16.dp, vertical = 18.dp)
+                    ) {
                         Text(
                             text = track.title,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = HomeAccentColor,
-                            maxLines = 1,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color.White,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis
                         )
-                        Text(
-                            text = track.trackArtists.joinToString(", ") { it.name },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = HomeMutedColor,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                    }
+
+                    if (isActive) {
+                        Box(
+                            modifier = Modifier
+                                .matchParentSize()
+                                .background(Color.White.copy(alpha = 0.04f))
                         )
                     }
                 }
@@ -503,7 +510,6 @@ private fun AlbumHighlightsRow(
                     .clickable { onAlbumClick(highlight.albumHash) },
                 shape = MaterialTheme.shapes.medium,
                 color = HomeCardColor,
-                border = BorderStroke(1.dp, HomeBorderColor),
                 tonalElevation = 0.dp
             ) {
                 Column(
@@ -557,7 +563,6 @@ private fun FolderRow(
                     .clickable { onFolderClick(folder) },
                 shape = MaterialTheme.shapes.medium,
                 color = HomeCardColor,
-                border = BorderStroke(1.dp, HomeBorderColor),
                 tonalElevation = 0.dp
             ) {
                 Column(
@@ -597,7 +602,6 @@ private fun ArtistSpotlightRow(
             Surface(
                 shape = MaterialTheme.shapes.small,
                 color = HomeCardAltColor,
-                border = BorderStroke(1.dp, HomeBorderColor),
                 tonalElevation = 0.dp,
                 modifier = Modifier
                     .clickable { onClick(artist.artistHash) }
@@ -687,7 +691,6 @@ private data class HomeStat(
 
 private val HomeCardColor = Color(0xFF151515)
 private val HomeCardAltColor = Color(0xFF1F1F1F)
-private val HomeBorderColor = Color(0x33FFFFFF)
 private val HomeAccentColor = Color(0xFFF5F5F5)
 private val HomeMutedColor = Color(0xFF9C9C9C)
 

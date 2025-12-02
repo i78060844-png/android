@@ -1,12 +1,13 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
 }
 
 android {
     namespace = "com.android.swingmusic.home"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
@@ -28,9 +29,6 @@ android {
     }
     buildFeatures {
         compose = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.0"
     }
     packaging {
         resources {

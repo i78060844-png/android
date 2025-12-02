@@ -1,13 +1,14 @@
 plugins {
     id("com.android.library")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
 }
 
 android {
     namespace = "com.android.swingmusic.auth"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26
@@ -29,10 +30,6 @@ android {
     }
     buildFeatures {
         compose = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.0"
     }
 
     packaging {
@@ -72,8 +69,8 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.5.0")
 
     // Hilt DI
-    implementation("com.google.dagger:hilt-android:2.50")
-    ksp("com.google.dagger:hilt-android-compiler:2.50")
+    implementation("com.google.dagger:hilt-android:2.57.2")
+    ksp("com.google.dagger:hilt-android-compiler:2.57.2")
 
     // Hilt Navigation-Compose
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
