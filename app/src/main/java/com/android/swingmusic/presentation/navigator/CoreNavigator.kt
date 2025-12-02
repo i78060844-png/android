@@ -1,34 +1,39 @@
 package com.android.swingmusic.presentation.navigator
 
 import androidx.navigation.NavController
-import com.android.swingmusic.album.presentation.screen.destinations.AlbumWithInfoScreenDestination
-import com.android.swingmusic.album.presentation.screen.destinations.AllAlbumScreenDestination
-import com.android.swingmusic.artist.presentation.screen.destinations.ArtistInfoScreenDestination
-import com.android.swingmusic.artist.presentation.screen.destinations.AllArtistsScreenDestination
-import com.android.swingmusic.artist.presentation.screen.destinations.ViewAllScreenOnArtistDestination
-import com.android.swingmusic.auth.presentation.screen.destinations.LoginWithQrCodeDestination
-import com.android.swingmusic.auth.presentation.screen.destinations.LoginWithUsernameScreenDestination
+import com.ramcosta.composedestinations.generated.featurealbum.destinations.AlbumWithInfoScreenDestination
+import com.ramcosta.composedestinations.generated.featurealbum.destinations.AllAlbumScreenDestination
+import com.ramcosta.composedestinations.generated.featureartist.destinations.ArtistInfoScreenDestination
+import com.ramcosta.composedestinations.generated.featureartist.destinations.AllArtistsScreenDestination
+import com.ramcosta.composedestinations.generated.featureartist.destinations.ViewAllScreenOnArtistDestination
+import com.ramcosta.composedestinations.generated.auth.destinations.LoginWithQrCodeDestination
+import com.ramcosta.composedestinations.generated.auth.destinations.LoginWithUsernameScreenDestination
 import com.android.swingmusic.common.presentation.navigator.CommonNavigator
-import com.android.swingmusic.folder.presentation.screen.destinations.FoldersAndTracksPaginatedScreenDestination
-import com.android.swingmusic.home.presentation.destinations.HomeDestination
-import com.android.swingmusic.player.presentation.screen.destinations.QueueScreenDestination
-import com.android.swingmusic.search.presentation.screen.destinations.SearchScreenDestination
-import com.android.swingmusic.search.presentation.screen.destinations.ViewAllSearchResultsDestination
-import com.ramcosta.composedestinations.navigation.navigate
+import com.ramcosta.composedestinations.generated.featurefolder.destinations.FoldersAndTracksPaginatedScreenDestination
+import com.ramcosta.composedestinations.generated.featurehome.destinations.HomeDestination
+import com.ramcosta.composedestinations.generated.featureplayer.destinations.QueueScreenDestination
+import com.ramcosta.composedestinations.generated.featuresearch.destinations.SearchScreenDestination
+import com.ramcosta.composedestinations.generated.featuresearch.destinations.ViewAllSearchResultsDestination
+import com.ramcosta.composedestinations.spec.RouteOrDirection
+import com.ramcosta.composedestinations.utils.toDestinationsNavigator
 
 class CoreNavigator(
     private val navController: NavController
 ) : CommonNavigator {
 
+    private val navigator get() = navController.toDestinationsNavigator()
+
+    // Get the start destination as a RouteOrDirection for popUpTo calls
+    private val startDestination: RouteOrDirection
+        get() = HomeDestination
+
     /**----------------------------------- Auth Navigator ----------------------------------------*/
     override fun gotoLoginWithUsername() {
-        val targetDestination = LoginWithUsernameScreenDestination
-
-        navController.navigate(targetDestination) {
+        navigator.navigate(LoginWithUsernameScreenDestination) {
             launchSingleTop = true
             restoreState = false
 
-            popUpTo(navController.graph.startDestinationId) {
+            popUpTo(startDestination) {
                 inclusive = true
                 saveState = false
             }
@@ -36,13 +41,11 @@ class CoreNavigator(
     }
 
     override fun gotoLoginWithQrCode() {
-        val targetDestination = LoginWithQrCodeDestination
-
-        navController.navigate(targetDestination) {
+        navigator.navigate(LoginWithQrCodeDestination) {
             launchSingleTop = true
             restoreState = false
 
-            popUpTo(navController.graph.startDestinationId) {
+            popUpTo(startDestination) {
                 inclusive = true
                 saveState = false
             }
@@ -50,13 +53,11 @@ class CoreNavigator(
     }
 
     override fun gotoHome() {
-        val targetDestination = HomeDestination()
-
-        navController.navigate(targetDestination) {
+        navigator.navigate(HomeDestination()) {
             launchSingleTop = true
             restoreState = false
 
-            popUpTo(navController.graph.startDestinationId) {
+            popUpTo(startDestination) {
                 inclusive = true
                 saveState = false
             }
@@ -65,13 +66,11 @@ class CoreNavigator(
 
     // Todo: Remove this after adding home content
     override fun gotoFolders() {
-        val targetDestination = FoldersAndTracksPaginatedScreenDestination()
-
-        navController.navigate(targetDestination) {
+        navigator.navigate(FoldersAndTracksPaginatedScreenDestination()) {
             launchSingleTop = true
             restoreState = false
 
-            popUpTo(navController.graph.startDestinationId) {
+            popUpTo(startDestination) {
                 inclusive = true
                 saveState = false
             }
@@ -79,13 +78,11 @@ class CoreNavigator(
     }
 
     override fun gotoAlbumLibrary() {
-        val targetDestination = AllAlbumScreenDestination
-
-        navController.navigate(targetDestination) {
+        navigator.navigate(AllAlbumScreenDestination) {
             launchSingleTop = true
             restoreState = false
 
-            popUpTo(navController.graph.startDestinationId) {
+            popUpTo(startDestination) {
                 inclusive = false
                 saveState = false
             }
@@ -93,13 +90,11 @@ class CoreNavigator(
     }
 
     override fun gotoArtistLibrary() {
-        val targetDestination = AllArtistsScreenDestination
-
-        navController.navigate(targetDestination) {
+        navigator.navigate(AllArtistsScreenDestination) {
             launchSingleTop = true
             restoreState = false
 
-            popUpTo(navController.graph.startDestinationId) {
+            popUpTo(startDestination) {
                 inclusive = false
                 saveState = false
             }
@@ -107,18 +102,14 @@ class CoreNavigator(
     }
 
     override fun gotoSearch() {
-        val targetDestination = SearchScreenDestination
-
-        navController.navigate(targetDestination) {
+        navigator.navigate(SearchScreenDestination) {
             launchSingleTop = true
         }
     }
 
     /**----------------------------------- Album Navigator --------------------------------------*/
     override fun gotoAlbumWithInfo(albumHash: String) {
-        val targetDestination = AlbumWithInfoScreenDestination(albumHash)
-
-        navController.navigate(targetDestination) {
+        navigator.navigate(AlbumWithInfoScreenDestination(albumHash)) {
             launchSingleTop = true
         }
     }
@@ -129,21 +120,18 @@ class CoreNavigator(
 
     /**----------------------------------- Player Navigator -------------------------------------*/
     override fun gotoQueueScreen() {
-        val targetDestination = QueueScreenDestination
-
-        navController.navigate(targetDestination) {
+        navigator.navigate(QueueScreenDestination) {
             launchSingleTop = true
         }
-
     }
 
     override fun gotoArtistInfo(artistHash: String) {
-        val targetDestination = ArtistInfoScreenDestination(
-            artistHash = artistHash,
-            loadNewArtist = true
-        )
-
-        navController.navigate(targetDestination) {
+        navigator.navigate(
+            ArtistInfoScreenDestination(
+                artistHash = artistHash,
+                loadNewArtist = true
+            )
+        ) {
             launchSingleTop = true
         }
     }
@@ -153,13 +141,13 @@ class CoreNavigator(
         artistName: String,
         baseUrl: String
     ) {
-        val targetDestination = ViewAllScreenOnArtistDestination(
-            viewAllType = viewAllType,
-            artistName = artistName,
-            baseUrl = baseUrl
-        )
-
-        navController.navigate(targetDestination) {
+        navigator.navigate(
+            ViewAllScreenOnArtistDestination(
+                viewAllType = viewAllType,
+                artistName = artistName,
+                baseUrl = baseUrl
+            )
+        ) {
             launchSingleTop = true
         }
     }
@@ -168,19 +156,18 @@ class CoreNavigator(
         viewAllType: String,
         searchParams: String
     ) {
-        val targetDestination = ViewAllSearchResultsDestination(
-            searchParams = searchParams,
-            viewAllType = viewAllType
-        )
-
-        navController.navigate(targetDestination) {
+        navigator.navigate(
+            ViewAllSearchResultsDestination(
+                searchParams = searchParams,
+                viewAllType = viewAllType
+            )
+        ) {
             launchSingleTop = true
         }
     }
 
     override fun gotoSourceFolder(name: String, path: String) {
-        val targetDestination = FoldersAndTracksPaginatedScreenDestination(name, path)
-        navController.navigate(targetDestination) {
+        navigator.navigate(FoldersAndTracksPaginatedScreenDestination(name, path)) {
             launchSingleTop = true
         }
     }

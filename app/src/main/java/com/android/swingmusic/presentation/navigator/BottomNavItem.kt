@@ -1,18 +1,18 @@
 package com.android.swingmusic.presentation.navigator
 
 import androidx.annotation.DrawableRes
-import com.android.swingmusic.album.presentation.screen.destinations.AllAlbumScreenDestination
-import com.android.swingmusic.artist.presentation.screen.destinations.AllArtistsScreenDestination
-import com.android.swingmusic.folder.presentation.screen.destinations.FoldersAndTracksPaginatedScreenDestination
-import com.android.swingmusic.home.presentation.destinations.HomeDestination
-import com.android.swingmusic.search.presentation.screen.destinations.SearchScreenDestination
+import com.ramcosta.composedestinations.generated.featurealbum.destinations.AllAlbumScreenDestination
+import com.ramcosta.composedestinations.generated.featureartist.destinations.AllArtistsScreenDestination
+import com.ramcosta.composedestinations.generated.featurefolder.destinations.FoldersAndTracksPaginatedScreenDestination
+import com.ramcosta.composedestinations.generated.featurehome.destinations.HomeDestination
+import com.ramcosta.composedestinations.generated.featuresearch.destinations.SearchScreenDestination
 import com.ramcosta.composedestinations.spec.DestinationSpec
 import com.android.swingmusic.uicomponent.R as UiComponent
 
 sealed class BottomNavItem(
     var title: String,
     @DrawableRes var icon: Int,
-    var destination: DestinationSpec<*>
+    var destination: DestinationSpec
 ) {
     data object Home : BottomNavItem(
         title = "Home",

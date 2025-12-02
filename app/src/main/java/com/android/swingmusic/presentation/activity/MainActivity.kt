@@ -14,14 +14,10 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -35,30 +31,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.android.swingmusic.album.presentation.screen.destinations.AlbumWithInfoScreenDestination
-import com.android.swingmusic.album.presentation.screen.destinations.AllAlbumScreenDestination
-import com.android.swingmusic.artist.presentation.screen.destinations.AllArtistsScreenDestination
-import com.android.swingmusic.artist.presentation.screen.destinations.ArtistInfoScreenDestination
-import com.android.swingmusic.artist.presentation.screen.destinations.ViewAllScreenOnArtistDestination
+import com.ramcosta.composedestinations.generated.featurealbum.destinations.AlbumWithInfoScreenDestination
+import com.ramcosta.composedestinations.generated.featurealbum.destinations.AllAlbumScreenDestination
+import com.ramcosta.composedestinations.generated.featureartist.destinations.AllArtistsScreenDestination
+import com.ramcosta.composedestinations.generated.featureartist.destinations.ArtistInfoScreenDestination
+import com.ramcosta.composedestinations.generated.featureartist.destinations.ViewAllScreenOnArtistDestination
 import com.android.swingmusic.artist.presentation.viewmodel.ArtistInfoViewModel
 import com.android.swingmusic.auth.data.workmanager.scheduleTokenRefreshWork
-import com.android.swingmusic.auth.presentation.screen.destinations.LoginWithQrCodeDestination
-import com.android.swingmusic.auth.presentation.screen.destinations.LoginWithUsernameScreenDestination
+import com.ramcosta.composedestinations.generated.auth.destinations.LoginWithQrCodeDestination
+import com.ramcosta.composedestinations.generated.auth.destinations.LoginWithUsernameScreenDestination
 import com.android.swingmusic.auth.presentation.viewmodel.AuthViewModel
 import com.android.swingmusic.common.presentation.navigator.CommonNavigator
 import com.android.swingmusic.folder.presentation.event.FolderUiEvent
-import com.android.swingmusic.folder.presentation.screen.destinations.FoldersAndTracksPaginatedScreenDestination
+import com.ramcosta.composedestinations.generated.featurefolder.destinations.FoldersAndTracksPaginatedScreenDestination
 import com.android.swingmusic.folder.presentation.viewmodel.FoldersViewModel
-import com.android.swingmusic.home.presentation.destinations.HomeDestination
+import com.ramcosta.composedestinations.generated.featurehome.destinations.HomeDestination
 import com.android.swingmusic.player.presentation.screen.BottomSheetPlayer
-import com.android.swingmusic.player.presentation.screen.destinations.QueueScreenDestination
+import com.ramcosta.composedestinations.generated.featureplayer.destinations.QueueScreenDestination
 import com.android.swingmusic.player.presentation.viewmodel.MediaControllerViewModel
 import com.android.swingmusic.presentation.navigator.BottomNavItem
 import com.android.swingmusic.presentation.navigator.CoreNavigator
@@ -68,19 +63,16 @@ import com.android.swingmusic.presentation.navigator.scaleInPopEnterTransition
 import com.android.swingmusic.presentation.navigator.scaleOutExitTransition
 import com.android.swingmusic.presentation.navigator.scaleOutPopExitTransition
 import com.android.swingmusic.search.presentation.event.SearchUiEvent
-import com.android.swingmusic.search.presentation.screen.destinations.SearchScreenDestination
-import com.android.swingmusic.search.presentation.screen.destinations.ViewAllSearchResultsDestination
+import com.ramcosta.composedestinations.generated.featuresearch.destinations.SearchScreenDestination
+import com.ramcosta.composedestinations.generated.featuresearch.destinations.ViewAllSearchResultsDestination
 import com.android.swingmusic.search.presentation.viewmodel.SearchViewModel
 import com.android.swingmusic.service.PlaybackService
 import com.android.swingmusic.service.SessionTokenManager
-import com.google.accompanist.navigation.material.ExperimentalMaterialNavigationApi
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
 import com.ramcosta.composedestinations.DestinationsNavHost
-import com.ramcosta.composedestinations.animations.defaults.NestedNavGraphDefaultAnimations
-import com.ramcosta.composedestinations.animations.defaults.RootNavGraphDefaultAnimations
-import com.ramcosta.composedestinations.animations.rememberAnimatedNavHostEngine
 import com.ramcosta.composedestinations.navigation.dependency
+import com.ramcosta.composedestinations.rememberNavHostEngine
 import com.ramcosta.composedestinations.utils.destination
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -307,7 +299,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterialNavigationApi::class)
 @ExperimentalAnimationApi
 @Composable
 internal fun SwingMusicAppNavigation(
@@ -324,29 +315,10 @@ internal fun SwingMusicAppNavigation(
         CoreNavigator(navController = navController)
     }
 
-    val animatedNavHostEngine = rememberAnimatedNavHostEngine(
-        navHostContentAlignment = Alignment.TopCenter,
-        rootDefaultAnimations = RootNavGraphDefaultAnimations.ACCOMPANIST_FADING,
-        defaultAnimationsForNestedNavGraph = mapOf(
-            NavGraphs.root(isUserLoggedIn) to NestedNavGraphDefaultAnimations(
-                enterTransition = {
-                    scaleInEnterTransition()
-                },
-                exitTransition = {
-                    scaleOutExitTransition()
-                },
-                popEnterTransition = {
-                    scaleInPopEnterTransition()
-                },
-                popExitTransition = {
-                    scaleOutPopExitTransition()
-                }
-            )
-        )
-    )
+    val navHostEngine = rememberNavHostEngine()
 
     DestinationsNavHost(
-        engine = animatedNavHostEngine,
+        engine = navHostEngine,
         navController = navController,
         navGraph = navGraph,
         dependenciesContainerBuilder = {
