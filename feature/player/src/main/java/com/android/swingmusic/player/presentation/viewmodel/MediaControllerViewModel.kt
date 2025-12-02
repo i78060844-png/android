@@ -403,12 +403,6 @@ class MediaControllerViewModel @Inject constructor(
     /**
      * Record replay session for TTL upgrades
      */
-        }
-    }
-    
-    /**
-     * Record replay session for TTL upgrades
-     */
     private fun recordReplaySession(track: Track, startPositionSec: Int, listenedDurationSec: Int) {
         viewModelScope.launch {
             try {
