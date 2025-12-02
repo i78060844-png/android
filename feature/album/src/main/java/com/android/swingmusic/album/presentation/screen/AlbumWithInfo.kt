@@ -129,8 +129,9 @@ fun AlbumWithInfo(
     onGotoArtist: (hash: String) -> Unit,
 ) {
     val isDarkTheme = isSystemInDarkTheme()
-    val versionContainerColor = if (isDarkTheme) Color(0x26DACC32) else Color(0x3D744F00)
-    val versionTextColor = if (isDarkTheme) Color(0xFFDACC32) else Color(0xFF744E00)
+    // AMOLED Spotify-style version badge colors
+    val versionContainerColor = if (isDarkTheme) Color(0x261DB954) else Color(0x3D744F00)
+    val versionTextColor = if (isDarkTheme) Color(0xFF1DB954) else Color(0xFF744E00)
 
     val interaction = remember { MutableInteractionSource() }
     val listState = rememberLazyListState()

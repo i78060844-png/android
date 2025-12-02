@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Devices
@@ -52,15 +53,16 @@ fun FolderItem(
             .clickable {
                 onClickFolderItem(folder)
             }
-            .padding(horizontal = 4.dp)
+            .padding(horizontal = 4.dp),
+        color = Color.Transparent
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .padding(
-                    start = (11.5).dp, // to align well with Track Item
-                    top = 12.dp,
-                    bottom = 12.dp,
+                    start = (11.5).dp,
+                    top = 10.dp,
+                    bottom = 10.dp,
                     end = 8.dp
                 )
                 .fillMaxWidth()
@@ -69,38 +71,38 @@ fun FolderItem(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Folder Icon
+                // Folder Icon - Spotify style
                 Box(
                     modifier = Modifier
-                        .padding(start = 4.dp, end = 4.dp)
+                        .padding(start = 4.dp, end = 12.dp)
                         .requiredSize(48.dp)
-                        .clip(RoundedCornerShape(16))
-                        .background(
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = .1F)
-                        ),
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(Color(0xFF282828)), // Spotify card color
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        modifier = Modifier,
+                        modifier = Modifier.size(24.dp),
                         painter = painterResource(id = R.drawable.folder_outlined_open),
                         contentDescription = "Folder Icon",
+                        tint = Color(0xFFB3B3B3)
                     )
                 }
 
                 // Folder name, folder count, songs
                 Column(
                     modifier = Modifier
-                        .padding(start = 8.dp)
+                        .padding(start = 0.dp)
                         .weight(1f)
                 ) {
                     Text(
                         text = folder.name,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.White,
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 1
                     )
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically
@@ -108,32 +110,27 @@ fun FolderItem(
                         if (folder.folderCount != 0) {
                             Text(
                                 text = folder.folderCount.getFolderHelperText(),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .84F),
+                                color = Color(0xFFB3B3B3),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
                         if (folder.folderCount > 0 && folder.trackCount > 0) {
-                            // Dot Separator
-                            Box(
-                                modifier = Modifier
-                                    .padding(horizontal = 8.dp)
-                                    .clip(CircleShape)
-                                    .size(3.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.onSurface.copy(alpha = .50F)
-                                    )
+                            Text(
+                                text = " • ",
+                                color = Color(0xFFB3B3B3),
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
                         if (folder.trackCount != 0) {
                             Text(
                                 text = folder.trackCount.getTrackCountHelperText(),
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .84F),
+                                color = Color(0xFFB3B3B3),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         } else if (folder.folderCount == 0) {
                             Text(
-                                text = "This folder is empty",
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .84F),
+                                text = "Empty folder",
+                                color = Color(0xFF6A6A6A),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         }
@@ -141,18 +138,12 @@ fun FolderItem(
                 }
             }
 
-            // Reserve space for menu icon to maintain consistent alignment with TrackItem
+            // Menu icon placeholder
             Box(
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(44.dp),
                 contentAlignment = Alignment.Center
             ) {
                 // TODO: Return this when contextual menu is ready
-                /*IconButton(onClick = { onClickMoreVert(folder) }) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "MoreVert"
-                    )
-                }*/
             }
         }
     }

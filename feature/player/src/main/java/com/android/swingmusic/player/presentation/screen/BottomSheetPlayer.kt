@@ -17,10 +17,16 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -98,6 +104,9 @@ fun BottomSheetPlayer(
         skipHiddenState = true
     )
     val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
+    
+    val navigationBarHeight = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val peekHeight = 64.dp + navigationBarHeight
 
     val track = playerUiState.nowPlayingTrack
 
@@ -108,7 +117,7 @@ fun BottomSheetPlayer(
 
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
-        sheetPeekHeight = 64.dp,
+        sheetPeekHeight = peekHeight,
         sheetDragHandle = null,
         sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
         sheetContainerColor = MaterialTheme.colorScheme.surface,
@@ -210,9 +219,11 @@ private fun CollapsedPlayerContent(
 ) {
     var dragOffset by remember { mutableStateOf(0f) }
 
+    // Spotify-style mini player
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .navigationBarsPadding()
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
                     onDragEnd = {
@@ -229,27 +240,25 @@ private fun CollapsedPlayerContent(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) { onExpand() }
-            .background(MaterialTheme.colorScheme.inverseOnSurface)
+            .background(Color(0xFF181818)) // Spotify dark card color
     ) {
-        Box(
+        // Progress bar at top - Spotify style
+        androidx.compose.material3.LinearProgressIndicator(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 8.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .width(32.dp)
-                    .height(4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f))
-            )
-        }
+                .height(2.dp),
+            progress = { seekPosition },
+            gapSize = 0.dp,
+            drawStopIndicator = {},
+            strokeCap = StrokeCap.Square,
+            color = Color(0xFF1DB954), // Spotify green
+            trackColor = Color(0xFF404040)
+        )
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 8.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -257,10 +266,11 @@ private fun CollapsedPlayerContent(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Album art - Spotify uses smaller rounded corners
                 AsyncImage(
                     modifier = Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(8.dp)),
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(4.dp)),
                     model = ImageRequest.Builder(LocalContext.current)
                         .data("${baseUrl}img/thumbnail/small/${track.image}")
                         .crossfade(true)
@@ -279,29 +289,27 @@ private fun CollapsedPlayerContent(
                         text = track.title,
                         maxLines = 1,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Medium,
                         overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = Color.White
                     )
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = track.trackArtists.joinToString(", ") { it.name },
                         maxLines = 1,
                         style = MaterialTheme.typography.bodySmall,
                         overflow = TextOverflow.Ellipsis,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        color = Color(0xFFB3B3B3) // Spotify subdued text
                     )
                 }
             }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onSwipePrev) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.prev),
-                        contentDescription = "Previous",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-
+            // Controls - Spotify style: just favorite and play button
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // Play/Pause button - Spotify uses a white filled circle
                 IconButton(
                     onClick = {
                         if (playbackState == PlaybackState.ERROR) {
@@ -309,13 +317,15 @@ private fun CollapsedPlayerContent(
                         } else {
                             onTogglePlaybackState()
                         }
-                    }
+                    },
+                    modifier = Modifier.size(48.dp)
                 ) {
                     if (isBuffering) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
-                            strokeWidth = 1.dp,
-                            strokeCap = StrokeCap.Round
+                            strokeWidth = 2.dp,
+                            strokeCap = StrokeCap.Round,
+                            color = Color.White
                         )
                     } else {
                         Icon(
@@ -323,31 +333,14 @@ private fun CollapsedPlayerContent(
                                 id = if (playbackState == PlaybackState.PLAYING)
                                     R.drawable.pause_icon else R.drawable.play_arrow
                             ),
-                            contentDescription = "Play/Pause"
+                            contentDescription = "Play/Pause",
+                            modifier = Modifier.size(28.dp),
+                            tint = Color.White
                         )
                     }
                 }
-
-                IconButton(onClick = onSwipeNext) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.next),
-                        contentDescription = "Next",
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
             }
         }
-
-        androidx.compose.material3.LinearProgressIndicator(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(2.dp),
-            progress = { seekPosition },
-            gapSize = 0.dp,
-            drawStopIndicator = {},
-            strokeCap = StrokeCap.Square,
-            trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)
-        )
     }
 }
 
@@ -385,15 +378,15 @@ private fun ExpandedPlayerContent(
 
     val inverseOnSurface = MaterialTheme.colorScheme.inverseOnSurface
     val onSurface = MaterialTheme.colorScheme.onSurface
-    // Spotify dark theme colors for file type badges
+    // AMOLED Spotify-style file type badge colors
     val fileTypeBadgeColor = when (track.bitrate) {
-        in 321..1023 -> Color(0xFF172B2E)
-        in 1024..Int.MAX_VALUE -> Color(0XFF443E30)
+        in 321..1023 -> Color(0xFF0D2629)   // Dark teal for high quality
+        in 1024..Int.MAX_VALUE -> Color(0XFF2D2818)  // Dark gold for lossless
         else -> inverseOnSurface
     }
     val fileTypeTextColor = when (track.bitrate) {
-        in 321..1023 -> Color(0XFF33FFEE)
-        in 1024..Int.MAX_VALUE -> Color(0XFFEFE143)
+        in 321..1023 -> Color(0XFF00D4FF)   // Cyan accent for high quality
+        in 1024..Int.MAX_VALUE -> Color(0XFFFFD700)  // Gold accent for lossless
         else -> onSurface
     }
 
@@ -440,6 +433,7 @@ private fun ExpandedPlayerContent(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
+            .statusBarsPadding()
     ) {
         AsyncImage(
             modifier = Modifier
@@ -668,84 +662,71 @@ private fun ExpandedPlayerContent(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
+                    // Prev button - Spotify style (no background)
                     IconButton(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .5F)),
+                        modifier = Modifier.size(48.dp),
                         onClick = onClickPrev
                     ) {
                         Icon(
+                            modifier = Modifier.size(32.dp),
                             painter = painterResource(id = R.drawable.prev),
-                            contentDescription = "Prev"
+                            contentDescription = "Prev",
+                            tint = Color.White
                         )
                     }
 
+                    // Play/Pause button - Spotify green circle
                     Box(
-                        modifier = Modifier.clickable(
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() },
-                            onClick = {
-                                if (playbackState != PlaybackState.ERROR) {
-                                    onTogglePlayerState()
-                                } else {
-                                    onResumePlayBackFromError()
+                        modifier = Modifier
+                            .size(64.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF1DB954)) // Spotify green
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() },
+                                onClick = {
+                                    if (playbackState != PlaybackState.ERROR) {
+                                        onTogglePlayerState()
+                                    } else {
+                                        onResumePlayBackFromError()
+                                    }
                                 }
-                            }
-                        )
+                            ),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier.wrapContentSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (playbackState == PlaybackState.ERROR) {
-                                Icon(
-                                    modifier = Modifier
-                                        .padding(horizontal = 5.dp)
-                                        .size(70.dp),
-                                    painter = painterResource(id = playbackStateIcon),
-                                    tint = if (isBuffering)
-                                        MaterialTheme.colorScheme.onErrorContainer.copy(alpha = .25F) else
-                                        MaterialTheme.colorScheme.onErrorContainer.copy(alpha = .75F),
-                                    contentDescription = "Error state"
-                                )
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .height(70.dp)
-                                        .width(80.dp)
-                                        .clip(RoundedCornerShape(32))
-                                        .background(MaterialTheme.colorScheme.secondaryContainer),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        modifier = Modifier.size(44.dp),
-                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        painter = painterResource(id = playbackStateIcon),
-                                        contentDescription = "Play/Pause"
-                                    )
-                                }
-                            }
-
-                            if (isBuffering) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(50.dp),
-                                    strokeCap = StrokeCap.Round,
-                                    strokeWidth = 1.dp,
-                                    color = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                            }
+                        if (isBuffering) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(32.dp),
+                                strokeCap = StrokeCap.Round,
+                                strokeWidth = 2.dp,
+                                color = Color.Black
+                            )
+                        } else if (playbackState == PlaybackState.ERROR) {
+                            Icon(
+                                modifier = Modifier.size(32.dp),
+                                painter = painterResource(id = R.drawable.error),
+                                tint = Color.Black,
+                                contentDescription = "Error state"
+                            )
+                        } else {
+                            Icon(
+                                modifier = Modifier.size(32.dp),
+                                tint = Color.Black,
+                                painter = painterResource(id = playbackStateIcon),
+                                contentDescription = "Play/Pause"
+                            )
                         }
                     }
 
+                    // Next button - Spotify style (no background)
                     IconButton(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = .5F)),
+                        modifier = Modifier.size(48.dp),
                         onClick = onClickNext
                     ) {
                         Icon(
+                            modifier = Modifier.size(32.dp),
                             painter = painterResource(id = R.drawable.next),
-                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            tint = Color.White,
                             contentDescription = "Next"
                         )
                     }
@@ -784,8 +765,8 @@ private fun ExpandedPlayerContent(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                    .background(MaterialTheme.colorScheme.inverseOnSurface)
+                    .background(Color(0xFF181818)) // Spotify dark card
+                    .navigationBarsPadding()
                     .padding(vertical = 12.dp, horizontal = 32.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -794,8 +775,8 @@ private fun ExpandedPlayerContent(
                     Icon(
                         painter = painterResource(id = repeatModeIcon),
                         tint = if (repeatMode == RepeatMode.REPEAT_OFF)
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = .3F)
-                        else MaterialTheme.colorScheme.onSurface,
+                            Color(0xFF6A6A6A)  // Subdued
+                        else Color(0xFF1DB954), // Spotify green when active
                         contentDescription = "Repeat"
                     )
                 }
@@ -803,6 +784,7 @@ private fun ExpandedPlayerContent(
                 IconButton(onClick = onClickQueueIcon) {
                     Icon(
                         painter = painterResource(id = R.drawable.play_list),
+                        tint = Color.White,
                         contentDescription = "Queue"
                     )
                 }
@@ -811,8 +793,8 @@ private fun ExpandedPlayerContent(
                     Icon(
                         painter = painterResource(id = R.drawable.shuffle),
                         tint = if (shuffleMode == ShuffleMode.SHUFFLE_OFF)
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = .3F)
-                        else MaterialTheme.colorScheme.onSurface,
+                            Color(0xFF6A6A6A)  // Subdued
+                        else Color(0xFF1DB954), // Spotify green when active
                         contentDescription = "Shuffle"
                     )
                 }

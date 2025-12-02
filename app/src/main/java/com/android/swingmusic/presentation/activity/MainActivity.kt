@@ -13,9 +13,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
@@ -181,7 +185,10 @@ class MainActivity : ComponentActivity() {
                         gesturesEnabled = showDrawer,
                         drawerContent = {
                             if (showDrawer) {
-                                ModalDrawerSheet {
+                                ModalDrawerSheet(
+                                    drawerContainerColor = MaterialTheme.colorScheme.surface,
+                                    windowInsets = WindowInsets.statusBars
+                                ) {
                                     Spacer(modifier = Modifier.height(24.dp))
                                     Text(
                                         text = "SwingMusic",
@@ -242,10 +249,13 @@ class MainActivity : ComponentActivity() {
                     ) {
                         Scaffold(
                             modifier = Modifier.fillMaxSize(),
+                            contentWindowInsets = WindowInsets(0, 0, 0, 0),
                             topBar = {
                                 if (showDrawer) {
                                     Box(
-                                        modifier = Modifier.padding(start = 8.dp, top = 8.dp)
+                                        modifier = Modifier
+                                            .windowInsetsPadding(WindowInsets.statusBars)
+                                            .padding(start = 8.dp, top = 8.dp)
                                     ) {
                                         IconButton(
                                             onClick = {

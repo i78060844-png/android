@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.SwingMusic" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@color/splash_background</item>
+    <!-- AMOLED Spotify Dark Theme -->
+    <style name="Theme.SwingMusic" parent="android:Theme.Material.NoActionBar">
+        <!-- True black background for OLED displays -->
+        <item name="android:windowBackground">@color/amoled_black</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@color/amoled_black</item>
+        <item name="android:colorBackground">@color/amoled_black</item>
+        <item name="android:colorPrimary">@color/spotify_green</item>
+        <item name="android:colorAccent">@color/spotify_green</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <!-- Enable edge-to-edge -->
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 </resources>

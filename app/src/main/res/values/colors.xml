@@ -1,10 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="splash_background">#121212</color>
+    <!-- AMOLED Spotify Dark Theme Colors -->
+    
+    <!-- Backgrounds - True black for OLED power saving -->
+    <color name="splash_background">#000000</color>
+    <color name="amoled_black">#FF000000</color>
+    <color name="amoled_dark_gray">#FF0A0A0A</color>
+    <color name="amoled_medium_gray">#FF141414</color>
+    <color name="amoled_light_gray">#FF1F1F1F</color>
+    <color name="amoled_elevated">#FF242424</color>
+    <color name="amoled_card">#FF181818</color>
+    
+    <!-- Spotify Green Accent Colors -->
     <color name="spotify_green">#FF1DB954</color>
     <color name="spotify_green_light">#FF1ED760</color>
-    <color name="spotify_black">#FF121212</color>
-    <color name="spotify_dark_gray">#FF181818</color>
+    <color name="spotify_green_dark">#FF169C46</color>
+    <color name="spotify_green_muted">#FF1A7C3D</color>
+    
+    <!-- Legacy aliases for compatibility -->
+    <color name="spotify_black">#FF000000</color>
+    <color name="spotify_dark_gray">#FF0A0A0A</color>
+    
+    <!-- Basic colors -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Text colors -->
+    <color name="text_primary">#FFFFFFFF</color>
+    <color name="text_secondary">#FFB3B3B3</color>
+    <color name="text_subdued">#FF6A6A6A</color>
+    <color name="text_dim">#FF535353</color>
+    
+    <!-- Accent colors for badges and highlights -->
+    <color name="accent_gold">#FFFFD700</color>
+    <color name="accent_cyan">#FF00D4FF</color>
+    <color name="accent_purple">#FFB388FF</color>
+    <color name="accent_pink">#FFFF4081</color>
+    <color name="accent_error">#FFFF6B6B</color>
 </resources>

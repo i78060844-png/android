@@ -129,14 +129,15 @@ private fun NowPlaying(
     val isDarkTheme = isSystemInDarkTheme()
     val inverseOnSurface = MaterialTheme.colorScheme.inverseOnSurface
     val onSurface = MaterialTheme.colorScheme.onSurface
+    // AMOLED Spotify-style file type badge colors
     val fileTypeBadgeColor = when (track.bitrate) {
-        in 321..1023 -> if (isDarkTheme) Color(0xFF172B2E) else Color(0xFFAEFAF4)
-        in 1024..Int.MAX_VALUE -> if (isDarkTheme) Color(0XFF443E30) else Color(0xFFFFFBCC)
+        in 321..1023 -> if (isDarkTheme) Color(0xFF0D2629) else Color(0xFFAEFAF4)
+        in 1024..Int.MAX_VALUE -> if (isDarkTheme) Color(0XFF2D2818) else Color(0xFFFFFBCC)
         else -> inverseOnSurface
     }
     val fileTypeTextColor = when (track.bitrate) {
-        in 321..1023 -> if (isDarkTheme) Color(0XFF33FFEE) else Color(0xFF172B2E)
-        in 1024..Int.MAX_VALUE -> if (isDarkTheme) Color(0XFFEFE143) else Color(0xFF221700)
+        in 321..1023 -> if (isDarkTheme) Color(0XFF00D4FF) else Color(0xFF0D2629)
+        in 1024..Int.MAX_VALUE -> if (isDarkTheme) Color(0XFFFFD700) else Color(0xFF221700)
         else -> onSurface
     }
 

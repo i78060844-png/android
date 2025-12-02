@@ -64,8 +64,8 @@ fun TrackItem(
 
     Box(
         modifier = Modifier
-            .padding(vertical = 4.dp, horizontal = 12.dp)
-            .clip(RoundedCornerShape(20)),
+            .padding(vertical = 2.dp, horizontal = 12.dp)
+            .clip(RoundedCornerShape(8.dp)),
         contentAlignment = Alignment.CenterStart
     ) {
         // Image, Title, Artists, Duration
@@ -73,8 +73,8 @@ fun TrackItem(
             modifier = Modifier
                 .background(
                     color = if (isCurrentTrack)
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = .14F) else
-                        Color.Unspecified
+                        Color(0xFF1DB954).copy(alpha = .15F) else // Spotify green highlight
+                        Color.Transparent
                 )
                 .clickable(
                     interactionSource = interaction,
@@ -83,8 +83,8 @@ fun TrackItem(
                 )
                 .padding(
                     start = if(isAlbumTrack) 2.dp else 8.dp,
-                    top = 8.dp,
-                    bottom = 8.dp
+                    top = 10.dp,
+                    bottom = 10.dp
                 )
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
@@ -97,36 +97,34 @@ fun TrackItem(
                 if (isAlbumTrack) {
                     Box(
                         modifier = Modifier
-                            .width(40.dp) // Fixed width for alignment
+                            .width(36.dp)
                             .padding(end = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         val trackNumberStr = track.trackNumber.toString()
                         if(track.trackNumber > 0) {
                             if (trackNumberStr.length <= 3) {
-                                // Single line for 1-3 digit numbers (1-999)
                                 Text(
                                     text = trackNumberStr,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    textAlign = TextAlign.End
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = if (isCurrentTrack) Color(0xFF1DB954) else Color(0xFFB3B3B3),
+                                    textAlign = TextAlign.Center
                                 )
                             } else {
-                                // Split into two lines for 4+ digit numbers (1000+)
                                 Column(
-                                    horizontalAlignment = Alignment.End
+                                    horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
                                     Text(
                                         text = trackNumberStr.take(3),
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        textAlign = TextAlign.End
+                                        color = if (isCurrentTrack) Color(0xFF1DB954) else Color(0xFFB3B3B3),
+                                        textAlign = TextAlign.Center
                                     )
                                     Text(
                                         text = trackNumberStr.drop(3),
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurface,
-                                        textAlign = TextAlign.End
+                                        color = if (isCurrentTrack) Color(0xFF1DB954) else Color(0xFFB3B3B3),
+                                        textAlign = TextAlign.Center
                                     )
                                 }
                             }
@@ -134,16 +132,12 @@ fun TrackItem(
                     }
                 }
 
+                // Album art - Spotify style with small rounded corners
                 Box(
                     modifier = Modifier
-                        .padding(end = 8.dp)
-                        .clip(RoundedCornerShape(16))
-                        .size(48.dp)
-                        .border(
-                            width = (.1).dp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .1F),
-                            shape = RoundedCornerShape(16)
-                        ),
+                        .padding(end = 12.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .size(48.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     AsyncImage(
@@ -165,62 +159,40 @@ fun TrackItem(
 
                 Column(
                     modifier = Modifier
-                        .padding(start = 4.dp)
+                        .padding(start = 0.dp)
                         .weight(1f)
                 ) {
                     Text(
                         text = track.title,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = if (isCurrentTrack) Color(0xFF1DB954) else Color.White,
                         maxLines = 1,
+                        style = MaterialTheme.typography.bodyMedium,
                         overflow = TextOverflow.Ellipsis
                     )
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        val artistsJoined = track.trackArtists.joinToString(", ") { it.name }
-                        Text(
-                            text = artistsJoined,
-                            modifier = Modifier.weight(1f, fill = false),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .84F),
-                            style = MaterialTheme.typography.bodySmall,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        // Dot Separator
-                        Box(
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp)
-                                .clip(CircleShape)
-                                .size(3.dp)
-                                .background(
-                                    MaterialTheme.colorScheme.onSurface.copy(alpha = .50F)
-                                )
-                        )
-
-                        Text(
-                            text = track.duration.formatDuration(),
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .84F),
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
+                    Text(
+                        text = track.trackArtists.joinToString(", ") { it.name },
+                        color = Color(0xFFB3B3B3), // Spotify subdued text
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
 
-            // Always reserve space for menu icon to maintain consistent alignment
+            // Menu icon
             Box(
-                modifier = Modifier.size(48.dp),
+                modifier = Modifier.size(44.dp),
                 contentAlignment = Alignment.Center
             ) {
                 if (showMenuIcon) {
                     IconButton(onClick = { onClickMoreVert(track) }) {
                         Icon(
                             imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More Icon"
+                            contentDescription = "More Icon",
+                            tint = Color(0xFFB3B3B3)
                         )
                     }
                 }

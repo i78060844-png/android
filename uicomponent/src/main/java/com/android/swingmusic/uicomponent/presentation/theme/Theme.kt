@@ -5,8 +5,8 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-// Spotify-style dark color scheme
-private val spotifyDarkColorScheme = darkColorScheme(
+// AMOLED Spotify-style dark color scheme with true blacks
+private val amoledSpotifyColorScheme = darkColorScheme(
     primary = dark_primary,
     onPrimary = dark_onPrimary,
     primaryContainer = dark_primaryContainer,
@@ -36,13 +36,23 @@ private val spotifyDarkColorScheme = darkColorScheme(
     surfaceTint = dark_surfaceTint,
     outlineVariant = dark_outlineVariant,
     scrim = dark_scrim,
+    // Additional Material3 surface colors for AMOLED
+    surfaceContainer = dark_surfaceContainer,
+    surfaceContainerLow = dark_surfaceContainerLow,
+    surfaceContainerHigh = dark_surfaceContainerHigh,
+    surfaceContainerHighest = dark_surfaceContainerHighest,
+    surfaceBright = dark_surfaceBright,
+    surfaceDim = dark_surfaceDim,
 )
 
 /**
- * SwingMusicTheme - Applies Spotify-style dark theme to the app
+ * SwingMusicTheme - AMOLED Spotify-style dark theme
  * 
- * Note: Parameters are kept for backward compatibility but are ignored.
- * The theme always uses the Spotify dark color scheme.
+ * Features:
+ * - True black (#000000) background for OLED power saving
+ * - Spotify green (#1DB954) as primary accent color
+ * - High contrast text for readability on dark backgrounds
+ * - Elevated surfaces with subtle gray tones
  * 
  * @param navBarColor Ignored - kept for API compatibility
  */
@@ -55,7 +65,7 @@ fun SwingMusicTheme(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = spotifyDarkColorScheme,
+        colorScheme = amoledSpotifyColorScheme,
         typography = Typography,
         content = content
     )
@@ -65,9 +75,7 @@ fun SwingMusicTheme(
 /**
  * SwingMusicTheme_Preview - Simplified theme function for Compose previews
  * 
- * This function avoids context dependencies that can break previews in
- * certain Compose versions. It uses the same Spotify dark color scheme
- * as the main theme function.
+ * Uses the same AMOLED Spotify dark color scheme as the main theme.
  */
 
 @Composable
@@ -75,7 +83,7 @@ fun SwingMusicTheme_Preview(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = spotifyDarkColorScheme,
+        colorScheme = amoledSpotifyColorScheme,
         typography = Typography,
     ) {
         content()

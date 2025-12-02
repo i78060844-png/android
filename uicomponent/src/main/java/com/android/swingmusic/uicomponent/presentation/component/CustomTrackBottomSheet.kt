@@ -77,8 +77,9 @@ fun CustomTrackBottomSheet(
             onHideBottomSheet(false)
         },
         dragHandle = null,
-        scrimColor = Color.Black.copy(alpha = .75F),
-        tonalElevation = 16.dp,
+        scrimColor = Color.Black.copy(alpha = .85F),
+        containerColor = Color(0xFF0A0A0A), // AMOLED dark container
+        tonalElevation = 0.dp,
     ) {
         clickedTrack?.let { track ->
             Column {

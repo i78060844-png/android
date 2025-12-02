@@ -42,14 +42,15 @@ fun SortByChip(
         UiComponents.drawable.arrow_upward
     } else UiComponents.drawable.arrow_downward
 
+    // AMOLED Spotify-style chip colors
     val borderTint = if (isSelected) Color.Transparent else
-        MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = .75F)
+        MaterialTheme.colorScheme.onSurface.copy(alpha = .25F)
 
-    val bgTint = if (!isSelected) Color.Transparent else
-        MaterialTheme.colorScheme.secondaryContainer
+    val bgTint = if (!isSelected) Color(0xFF141414) else  // Dark AMOLED chip background
+        Color(0xFF1DB954)  // Spotify green when selected
 
-    val textColor = if (isSelected) MaterialTheme.colorScheme.onSecondaryContainer else
-        MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 1F)
+    val textColor = if (isSelected) Color.Black else
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9F)
 
     val formattedLabel by remember {
         derivedStateOf {
@@ -74,27 +75,28 @@ fun SortByChip(
 
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(24))
+            .clip(RoundedCornerShape(20.dp))
             .background(bgTint)
             .border(
-                width = if (isSelected) 0.dp else (0.35).dp,
+                width = if (isSelected) 0.dp else 1.dp,
                 color = borderTint,
-                shape = RoundedCornerShape(24)
+                shape = RoundedCornerShape(20.dp)
             )
             .clickable { onClick(labelPair) }
-            .padding(horizontal = 10.dp, vertical = 4.dp)
+            .padding(horizontal = 14.dp, vertical = 8.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-
             Text(
                 text = formattedLabel,
-                color = textColor
+                color = textColor,
+                style = MaterialTheme.typography.bodyMedium
             )
-            Spacer(modifier = Modifier.width(4.dp))
             if (isSelected) {
+                Spacer(modifier = Modifier.width(4.dp))
                 Icon(
                     modifier = Modifier.size(16.dp),
                     painter = painterResource(id = icon),
+                    tint = textColor,
                     contentDescription = "Sort By Icon"
                 )
             }

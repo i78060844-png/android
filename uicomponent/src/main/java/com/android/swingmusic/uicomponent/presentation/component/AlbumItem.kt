@@ -57,9 +57,9 @@ fun AlbumItem(
     baseUrl: String,
     onClick: (albumHash: String) -> Unit
 ) {
-    // Spotify dark theme colors for version badges
-    val versionContainerColor = Color(0x26DACC32)
-    val versionTextColor = Color(0xFFDACC32)
+    // AMOLED Spotify-style version badge colors
+    val versionContainerColor = Color(0x261DB954)  // Green tinted background
+    val versionTextColor = Color(0xFF1DB954)       // Spotify green text
 
     val otherAlbumArtists: String? = remember {
         album.albumArtists
