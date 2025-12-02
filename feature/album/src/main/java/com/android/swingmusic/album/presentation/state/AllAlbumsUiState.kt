@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.emptyFlow
 data class AllAlbumsUiState(
     val pagingAlbums: Flow<PagingData<Album>> = emptyFlow(),
     val totalAlbums: Resource<Int> = Resource.Success(data = 0),
-    val sortBy: Pair<SortBy, String> = Pair(SortBy.LAST_PLAYED, "lastplayed"),
+    val sortBy: Pair<SortBy, String> = Pair(SortBy.CREATED_DATE, "created_date"),
     val sortOrder: SortOrder = SortOrder.DESCENDING,
-    val gridCount: Int = 2
+    val gridCount: Int = 3
 )

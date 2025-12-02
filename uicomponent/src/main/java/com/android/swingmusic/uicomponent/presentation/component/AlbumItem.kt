@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -47,8 +49,93 @@ import com.android.swingmusic.uicomponent.presentation.theme.SwingMusicTheme_Pre
 import com.android.swingmusic.uicomponent.presentation.util.Screen
 import com.android.swingmusic.uicomponent.presentation.util.formatDate
 
+/**
+ * Compact album item with overlay text - for grid views
+ */
 @Composable
 fun AlbumItem(
+    modifier: Modifier,
+    screen: Screen = Screen.ALL_ALBUMS,
+    album: Album,
+    albumArtistHash: String = "",
+    showDate: Boolean = true,
+    baseUrl: String,
+    onClick: (albumHash: String) -> Unit
+) {
+    val cardShape = RoundedCornerShape(6.dp)
+    
+    Box(
+        modifier = modifier
+            .padding(4.dp)
+            .aspectRatio(1f)
+            .clip(cardShape)
+            .background(Color(0xFF151515))
+            .clickable { onClick(album.albumHash) }
+    ) {
+        AsyncImage(
+            modifier = Modifier.fillMaxSize(),
+            model = ImageRequest.Builder(LocalContext.current)
+                .data("${baseUrl}img/thumbnail/medium/${album.image}")
+                .crossfade(true)
+                .build(),
+            placeholder = painterResource(R.drawable.audio_fallback),
+            fallback = painterResource(R.drawable.audio_fallback),
+            error = painterResource(R.drawable.audio_fallback),
+            contentDescription = album.title,
+            contentScale = ContentScale.Crop
+        )
+
+        // Gradient overlay with text
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomStart)
+                .background(
+                    Brush.verticalGradient(
+                        0f to Color.Transparent,
+                        0.5f to Color.Black.copy(alpha = 0.4f),
+                        1f to Color.Black.copy(alpha = 0.85f)
+                    )
+                )
+                .padding(8.dp)
+        ) {
+            Column {
+                Text(
+                    text = album.title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    fontWeight = FontWeight.Medium,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White
+                )
+                
+                if (screen != Screen.ARTIST && album.albumArtists.isNotEmpty()) {
+                    Text(
+                        text = album.albumArtists.first().name,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
+                } else if (screen == Screen.ARTIST && showDate) {
+                    Text(
+                        text = album.date.toLong().formatDate("yyyy"),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.7f)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Legacy album item with text below - kept for compatibility
+ */
+@Composable
+fun AlbumItemLegacy(
     modifier: Modifier,
     screen: Screen = Screen.ALL_ALBUMS,
     album: Album,
@@ -249,10 +336,10 @@ fun AlbumItemPreview() {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 8.dp),
-                columns = GridCells.Fixed(2),
+                columns = GridCells.Fixed(3),
                 state = rememberLazyGridState(),
             ) {
-                items(1) {
+                items(6) {
                     AlbumItem(
                         modifier = Modifier.fillMaxWidth(),
                         screen = Screen.ALL_ALBUMS,
@@ -261,17 +348,7 @@ fun AlbumItemPreview() {
                         onClick = {}
                     )
                 }
-                item {
-                    AlbumItem(
-                        modifier = Modifier.fillMaxWidth(),
-                        screen = Screen.ARTIST,
-                        album = album,
-                        baseUrl = "",
-                        onClick = {}
-                    )
-                }
             }
-
         }
     }
 }

@@ -9,14 +9,18 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -30,7 +34,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -128,31 +131,7 @@ private fun ArtistInfo(
         }
     }
 
-    Scaffold(
-        topBar = {
-            /*Row(
-                modifier = Modifier
-                    .padding(top = 24.dp)
-                    .fillMaxWidth()
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                IconButton(
-                    modifier = Modifier
-                        .clip(CircleShape),
-                    onClick = {
-                        onClickBack()
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back Arrow"
-                    )
-                }
-            }*/
-        }
-    ) {
-        if (showTrackBottomSheet) {
+    if (showTrackBottomSheet) {
             clickedTrack?.let { track ->
                 CustomTrackBottomSheet(
                     scope = scope,
@@ -214,20 +193,20 @@ private fun ArtistInfo(
             }
         }
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surface)
-        ) {
-            item {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.BottomCenter
-                ) {
-                    AsyncImage(
-                        modifier = Modifier
-                            .fillParentMaxWidth()
-                            .fillParentMaxHeight(.5F),
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+    ) {
+        item {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                AsyncImage(
+                    modifier = Modifier
+                        .fillParentMaxWidth()
+                        .fillParentMaxHeight(.5F),
                         model = ImageRequest.Builder(LocalContext.current)
                             .data("${baseUrl}img/artist/${artistInfo.artist.image}")
                             .crossfade(true)
@@ -492,9 +471,8 @@ private fun ArtistInfo(
 
             item {
                 LazyRow(
-                    modifier = Modifier
-                        .fillParentMaxWidth()
-                        .padding(horizontal = 12.dp)
+                    modifier = Modifier.fillParentMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp)
                 ) {
                     items(
                         items = artistInfo.albumsAndAppearances.albums
@@ -563,9 +541,8 @@ private fun ArtistInfo(
 
             item {
                 LazyRow(
-                    modifier = Modifier
-                        .fillParentMaxWidth()
-                        .padding(horizontal = 12.dp)
+                    modifier = Modifier.fillParentMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp)
                 ) {
                     items(
                         items = artistInfo.albumsAndAppearances.singlesAndEps
@@ -634,9 +611,8 @@ private fun ArtistInfo(
 
             item {
                 LazyRow(
-                    modifier = Modifier
-                        .fillParentMaxWidth()
-                        .padding(horizontal = 12.dp)
+                    modifier = Modifier.fillParentMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp)
                 ) {
                     items(
                         items = artistInfo.albumsAndAppearances.compilations
@@ -704,9 +680,8 @@ private fun ArtistInfo(
 
             item {
                 LazyRow(
-                    modifier = Modifier
-                        .fillParentMaxWidth()
-                        .padding(horizontal = 12.dp)
+                    modifier = Modifier.fillParentMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp)
                 ) {
                     items(
                         items = artistInfo.albumsAndAppearances.appearances
@@ -807,9 +782,8 @@ private fun ArtistInfo(
 
             item {
                 LazyRow(
-                    modifier = Modifier
-                        .fillParentMaxWidth()
-                        .padding(horizontal = 12.dp)
+                    modifier = Modifier.fillParentMaxWidth(),
+                    contentPadding = PaddingValues(horizontal = 16.dp)
                 ) {
                     items(
                         items = similarArtists
@@ -832,7 +806,6 @@ private fun ArtistInfo(
                 Spacer(modifier = Modifier.height(200.dp))
             }
         }
-    }
 }
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -874,14 +847,7 @@ fun ArtistInfoScreen(
     }
 
     SwingMusicTheme {
-        Scaffold(
-            snackbarHost = {
-                SnackbarHost(
-                    hostState = snackbarHostState,
-                    modifier = Modifier.padding(bottom = 170.dp)
-                )
-            }
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
             PullToRefreshBox(
                 modifier = Modifier.fillMaxSize(),
                 isRefreshing = showOnRefreshIndicator,
@@ -899,7 +865,7 @@ fun ArtistInfoScreen(
                 indicator = {
                     PullToRefreshDefaults.Indicator(
                         modifier = Modifier
-                            .padding(top = 76.dp)
+                            .padding(top = 48.dp)
                             .align(Alignment.TopCenter),
                         isRefreshing = showOnRefreshIndicator,
                         state = refreshState
@@ -1123,6 +1089,13 @@ fun ArtistInfoScreen(
                     }
                 }
             }
+            
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 170.dp)
+            )
         }
     }
 

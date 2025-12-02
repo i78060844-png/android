@@ -1,13 +1,18 @@
 package com.android.swingmusic.uicomponent.presentation.component
 
 import android.content.res.Configuration
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -15,13 +20,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.Wallpapers
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -29,6 +35,9 @@ import com.android.swingmusic.core.domain.model.Artist
 import com.android.swingmusic.uicomponent.R
 import com.android.swingmusic.uicomponent.presentation.theme.SwingMusicTheme_Preview
 
+/**
+ * Compact artist item with overlay text - for grid views
+ */
 @Composable
 fun ArtistItem(
     modifier: Modifier,
@@ -36,19 +45,18 @@ fun ArtistItem(
     baseUrl: String,
     onClick: (artistHash: String) -> Unit
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(
-            top = 16.dp,
-            bottom = 8.dp,
-            start = 8.dp,
-            end = 8.dp
-        )
+    val cardShape = RoundedCornerShape(6.dp)
+    
+    Box(
+        modifier = modifier
+            .padding(4.dp)
+            .aspectRatio(1f)
+            .clip(cardShape)
+            .background(Color(0xFF151515))
+            .clickable { onClick(artist.artistHash) }
     ) {
         AsyncImage(
-            modifier = modifier
-                .clip(CircleShape)
-                .clickable { onClick(artist.artistHash) },
+            modifier = Modifier.fillMaxSize(),
             model = ImageRequest.Builder(LocalContext.current)
                 .data("${baseUrl}img/artist/medium/${artist.image}")
                 .crossfade(true)
@@ -56,33 +64,37 @@ fun ArtistItem(
             placeholder = painterResource(R.drawable.artist_fallback),
             fallback = painterResource(R.drawable.artist_fallback),
             error = painterResource(R.drawable.artist_fallback),
-            contentDescription = "Artist Image",
-            contentScale = ContentScale.FillWidth,
+            contentDescription = artist.name,
+            contentScale = ContentScale.Crop
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(
-            text = artist.name,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            fontWeight = FontWeight.SemiBold,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        Spacer(modifier = Modifier.height(2.dp))
 
-        val helperText = artist.helpText.replace("minutes", "mins")
-
-        if (artist.helpText.isNotEmpty())
+        // Gradient overlay with text
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomStart)
+                .background(
+                    Brush.verticalGradient(
+                        0f to Color.Transparent,
+                        0.5f to Color.Black.copy(alpha = 0.4f),
+                        1f to Color.Black.copy(alpha = 0.85f)
+                    )
+                )
+                .padding(8.dp)
+        ) {
             Text(
-                text = helperText,
+                text = artist.name,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = .75F)
+                fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.labelMedium,
+                color = Color.White
             )
+        }
     }
 }
 
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_NO, wallpaper = Wallpapers.BLUE_DOMINATED_EXAMPLE)
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun ArtistItemPreview() {
     fun generateDummyArtist(): Artist {
@@ -98,14 +110,22 @@ fun ArtistItemPreview() {
 
     SwingMusicTheme_Preview {
         Surface {
-            ArtistItem(
-                modifier = Modifier.size(150.dp),
-                generateDummyArtist(),
-                baseUrl = "",
-                onClick = {
-
+            LazyVerticalGrid(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 8.dp),
+                columns = GridCells.Fixed(3),
+                state = rememberLazyGridState(),
+            ) {
+                items(6) {
+                    ArtistItem(
+                        modifier = Modifier.fillMaxWidth(),
+                        artist = generateDummyArtist(),
+                        baseUrl = "",
+                        onClick = {}
+                    )
                 }
-            )
+            }
         }
     }
 }
